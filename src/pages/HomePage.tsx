@@ -17,32 +17,17 @@ const orderable = (category: Category) => products.filter((p) => p.category === 
 const lowestPrice = (category: Category) => Math.min(...orderable(category).map((p) => p.price));
 
 // ---------- Shop categories ----------
-// Keep the three category destinations tied to the existing catalogue and custom editor.
-function DoodleStar({ className = '' }: { className?: string }) {
-  return <svg aria-hidden="true" viewBox="0 0 48 48" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round"><path d="m24 3 5.6 15.1L45 22l-13.3 9.4L34 46 23.1 36 9 43l5-15L3 18l16-1z" /></svg>;
-}
-
 function CategoryDoors() {
-  const stickerProduct = getProductBySlug('campus-survival-sheet');
-  const posterProduct = getProductBySlug('desk-wall-pack');
-  const softDaysProduct = getProductBySlug('soft-days-sheet');
-  const stickerDesigns = stickerProduct?.art.kind === 'sheet' ? stickerProduct.art.designs : [];
-  const posterDesigns = posterProduct?.art.kind === 'poster-set' ? posterProduct.art.posters.slice(0, 3) : [];
-  const catDesign = softDaysProduct?.art.kind === 'sheet'
-    ? softDaysProduct.art.designs.find((design) => design.name.toLowerCase().includes('cat'))
-    : undefined;
   const cards = [
-    { id: 'stickers', eyebrow: 'STICKER ESSENTIALS', title: 'Stickers', description: 'Mini designs, sheets and themed packs for your everyday things.', cta: 'SHOP STICKERS', to: shopUrl({ category: 'stickers' }), category: 'stickers' as const, color: '#FFE16B' },
-    { id: 'posters', eyebrow: 'WALL ART', title: 'Posters', description: 'Give your room, hostel or workspace a little more personality.', cta: 'SHOP POSTERS', to: shopUrl({ category: 'posters' }), category: 'posters' as const, color: '#A6DFF4' },
-    { id: 'custom', eyebrow: 'MAKE IT PERSONAL', title: 'Shop Your Own', description: 'Turn your own photo, drawing or idea into a custom sticker.', cta: 'START CREATING', to: '/create-your-stickers', category: null, color: '#A8E8C4' },
+    { id: 'stickers', eyebrow: 'STICKER ESSENTIALS', title: 'Stickers', description: 'Mini designs, sheets and themed packs for your everyday things.', cta: 'SHOP STICKERS', to: shopUrl({ category: 'stickers' }), category: 'stickers' as const, color: '#FFE16B', image: '/category-art/stickers.webp', alt: 'Layered character sticker collage with playful text stickers and stars' },
+    { id: 'posters', eyebrow: 'WALL ART', title: 'Posters', description: 'Give your room, hostel or workspace a little more personality.', cta: 'SHOP POSTERS', to: shopUrl({ category: 'posters' }), category: 'posters' as const, color: '#A6DFF4', image: '/category-art/posters.webp', alt: 'Three overlapping poster prints featuring superhero and automotive artwork' },
+    { id: 'custom', eyebrow: 'MAKE IT PERSONAL', title: 'Shop Your Own', description: 'Turn your own photo, drawing or idea into a custom sticker.', cta: 'START CREATING', to: '/create-your-stickers', category: null, color: '#A8E8C4', image: '/category-art/custom.webp', alt: 'Custom sticker upload card with cat illustration and plus symbol' },
   ];
+
   return (
     <section className="category-showcase relative isolate overflow-hidden bg-[#06483D] py-6 sm:py-7" aria-label="Shop categories">
       <div aria-hidden="true" className="cinema-grain pointer-events-none absolute inset-0 opacity-[0.07]" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_12%_25%,rgba(25,115,96,0.42),transparent_55%),radial-gradient(ellipse_at_85%_85%,rgba(0,23,20,0.5),transparent_48%)]" />
-      <DoodleStar className="pointer-events-none absolute left-[1%] top-[12%] hidden size-10 -rotate-12 text-[#FFD85F] lg:block" />
-      <DoodleStar className="pointer-events-none absolute right-[1%] top-[7%] hidden size-12 rotate-12 text-[#7FC0AF]/35 lg:block" />
-      <svg aria-hidden="true" className="pointer-events-none absolute bottom-6 left-3 hidden w-16 text-[#7FC0AF]/35 lg:block" viewBox="0 0 80 40" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 35q20-40 36-15T78 4M12 39q18-18 35-10" /></svg>
       <ul className="relative mx-auto grid max-w-[1040px] grid-cols-1 gap-5 px-4 sm:px-7 md:grid-cols-3 md:gap-5">
         {cards.map((card) => (
           <li key={card.id} className="min-w-0">
@@ -51,55 +36,8 @@ function CategoryDoors() {
                 <span className="text-[10px] font-semibold tracking-[.08em] text-[#121212]">{card.eyebrow}</span>
                 <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#101312] text-white transition-transform group-hover:translate-x-1"><LuArrowRight aria-hidden="true" className="size-4" /></span>
               </div>
-              <div className="relative my-1 min-h-[145px] flex-1" aria-hidden="true">
-                {card.id === 'stickers' && (
-                  <div className="absolute inset-0 mx-auto w-full max-w-[265px]">
-                    <DoodleStar className="absolute left-[3%] top-[4%] z-10 size-7 -rotate-12 text-[#111]" />
-                    <DoodleStar className="absolute right-[8%] top-[8%] z-10 size-5 rotate-12 text-[#111]" />
-                    <DoodleStar className="absolute right-[0%] bottom-[7%] z-10 size-9 rotate-12 text-[#138970]" />
-                    {stickerDesigns.slice(0, 4).map((design, index) => (
-                      <div key={design.name} className="absolute drop-shadow-[0_5px_3px_rgba(0,0,0,.28)] transition-transform group-hover:scale-105" style={[
-                        { top: '8%', left: '32%', width: '39%', transform: 'rotate(12deg)', zIndex: 1 },
-                        { top: '30%', left: '8%', width: '40%', transform: 'rotate(-17deg)', zIndex: 2 },
-                        { top: '29%', left: '55%', width: '37%', transform: 'rotate(15deg)', zIndex: 2 },
-                        { top: '50%', left: '31%', width: '37%', transform: 'rotate(-9deg)', zIndex: 3 },
-                      ][index]}><StickerSvg design={design} className="h-auto w-full" /></div>
-                    ))}
-                    <div className="absolute left-[1%] top-[35%] z-[4] -rotate-[14deg] rounded-[8px] border-[3px] border-white bg-[#F7B83B] px-2 py-1 text-center text-[11px] font-black leading-[1.02] text-[#302000] shadow-[0_4px_6px_#0004]">YOU'RE<br />A STAR ★</div>
-                    <div className="absolute bottom-[3%] right-[12%] z-[5] -rotate-[8deg] rounded-[8px] border-[3px] border-white bg-[#1B1C1B] px-2 py-1 text-center text-[12px] font-black leading-[.99] text-white shadow-[0_4px_6px_#0004]">oh shit..<br />here we<br />go again</div>
-                  </div>
-                )}
-                {card.id === 'posters' && (
-                  <div className="absolute inset-0 mx-auto w-full max-w-[265px]">
-                    <DoodleStar className="absolute left-[4%] top-[2%] size-5 -rotate-12 text-[#131313]" />
-                    <DoodleStar className="absolute right-[2%] bottom-[8%] size-8 rotate-12 text-[#131313]" />
-                    <svg className="absolute right-[14%] top-[5%] size-8" viewBox="0 0 40 40" fill="none" stroke="#111" strokeWidth="1.8"><path d="m5 20 9-8 1 11 16-13-5 17 9-2" /></svg>
-                    {posterDesigns.map((poster, index) => (
-                      <div key={poster.title + index} className="absolute top-[9%] h-[82%] w-[35%] overflow-hidden border-[5px] border-[#FFFCF4] bg-white shadow-[0_7px_10px_#0005] transition-transform duration-200 group-hover:-translate-y-1" style={[
-                        { left: '15%', transform: 'rotate(-13deg)', zIndex: 1 },
-                        { left: '34%', transform: 'rotate(3deg)', zIndex: 3 },
-                        { left: '54%', transform: 'rotate(13deg)', zIndex: 2 },
-                      ][index]}>
-                        <PosterSvg poster={poster} className="h-full w-full" />
-                      </div>
-                    ))}
-                    <span className="absolute left-[46%] top-[5%] z-[5] h-3 w-10 -rotate-2 bg-[#E5D5AC]/90 shadow-sm" />
-                    <span className="absolute bottom-[2%] right-[21%] h-4 w-4 rounded-full border-2 border-[#141414]" />
-                  </div>
-                )}
-                {card.id === 'custom' && (
-                  <div className="absolute inset-0 mx-auto w-full max-w-[265px]">
-                    <DoodleStar className="absolute left-[5%] top-[26%] size-7 -rotate-12 text-[#101010]" />
-                    <DoodleStar className="absolute right-[4%] top-[15%] size-5 rotate-12 text-[#101010]" />
-                    <DoodleStar className="absolute left-[12%] bottom-[3%] size-6 rotate-12 text-[#138970]" />
-                    <div className="absolute left-[18%] top-[29%] grid h-[63%] w-[66%] -rotate-[7deg] place-items-center rounded-xl border-2 border-dashed border-[#222] bg-[#FFFDF6] shadow-[0_7px_10px_#0003] transition-transform group-hover:rotate-[-3deg]">
-                      <div className="grid size-[65px] place-items-center rounded-[7px] bg-[#D7D8D6] text-[#111]"><LuImagePlus aria-hidden="true" className="size-11" strokeWidth={1.8} /></div>
-                    </div>
-                    {catDesign && <div className="absolute right-[15%] top-[3%] z-10 w-[70px] -rotate-12 drop-shadow-[0_4px_3px_#0003]"><StickerSvg design={catDesign} className="h-auto w-full" /></div>}
-                    <span className="absolute right-[12%] top-[20%] z-20 grid size-9 place-items-center rounded-full border-2 border-[#121212] bg-[#111] text-[28px] font-semibold leading-none text-white shadow-[0_3px_5px_#0004]">+</span>
-                    <span className="absolute bottom-[7%] right-[3%] z-10 rotate-[5deg] rounded-md border border-[#DEDCBE] bg-[#FFFDF5] px-2 py-1 text-[10px] font-extrabold leading-tight text-[#111] shadow-[0_4px_5px_#0003]">YOUR IDEA<br />HERE ♡</span>
-                  </div>
-                )}
+              <div className="relative my-1 flex min-h-[145px] flex-1 items-center justify-center overflow-visible" aria-hidden="true">
+                <img src={card.image} alt={card.alt} className="h-full max-h-[180px] w-full max-w-[290px] object-contain drop-shadow-[0_5px_5px_rgba(0,0,0,.18)] transition-transform duration-200 group-hover:scale-[1.035]" loading="lazy" decoding="async" />
               </div>
               <div className="relative z-10 mt-auto">
                 {card.category && <p className="text-[9px] tracking-wide text-[#111]/80">{orderable(card.category).length} designs · from {formatPrice(lowestPrice(card.category))}</p>}
