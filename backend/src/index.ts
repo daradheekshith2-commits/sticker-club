@@ -103,6 +103,23 @@ app.patch('/api/me',requireAuth,wrap(async(req,res)=>{
  const data=z.object({name:z.string().trim().min(1).max(100).optional(),phone:z.string().max(30).nullable().optional()}).parse(req.body);
  res.json(safeUser(await db.user.update({where:{id:req.session!.id},data})));
 }));
+app.post('/api/me/password',authLimit,requireAuth,wrap(async(req,res)=>{
+ const {currentPassword,newPassword}=z.object({
+  currentPassword:z.string().min(1),
+  newPassword:z.string().min(12).max(128)
+ }).parse(req.body);
+ const user=await db.user.findUnique({where:{id:req.session!.id}});
+ if(!user||!await bcrypt.compare(currentPassword,user.passwordHash)){
+  res.status(403).json({error:'Current password is incorrect'});return;
+ }
+ if(currentPassword===newPassword){res.status(400).json({error:'Choose a different password'});return;}
+ await db.$transaction(async(tx)=>{
+  await tx.user.update({where:{id:user.id},data:{passwordHash:await bcrypt.hash(newPassword,12)}});
+  await tx.refreshToken.updateMany({where:{userId:user.id,revokedAt:null},data:{revokedAt:new Date()}});
+ });
+ res.clearCookie('sc_refresh',cookieOptions);
+ res.json({message:'Password updated. Sign in again on all devices.'});
+}));
 app.get('/api/me/addresses',requireAuth,wrap(async(req,res)=>{res.json(await db.address.findMany({where:{userId:req.session!.id}}));}));
 const addressInput=z.object({recipient:z.string().min(1).max(100),line1:z.string().min(1).max(250),line2:z.string().max(250).optional(),city:z.string().min(1),state:z.string().min(1),postalCode:z.string().min(3).max(15),isDefault:z.boolean().default(false)});
 app.post('/api/me/addresses',requireAuth,wrap(async(req,res)=>{
