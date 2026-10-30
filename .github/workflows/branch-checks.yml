@@ -78,3 +78,6 @@ jobs:
       - run: npx prisma migrate deploy
       - run: npm run db:seed
       - run: npx prisma migrate status
+      - run: npm test
+        env:
+          TEST_DATABASE_IS_DISPOSABLE: "yes"
