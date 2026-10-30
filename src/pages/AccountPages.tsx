@@ -19,6 +19,7 @@ export function AuthPage({mode}:{mode:Mode}){
    if(mode==='register'){if(password!==confirm)throw Error('Passwords do not match');const u=await register(name,email,password);navigate(u.role==='ADMIN'?'/admin':'/account');}
    else if(mode==='login'||mode==='admin'){const u=await login(email,password);if(mode==='admin'&&u.role!=='ADMIN')throw Error('Administrator access required');navigate(u.role==='ADMIN'?'/admin':'/account');}
    else{
+    if(!apiUrl)throw Error('Authentication backend is not configured.');
     const r=await fetch(apiUrl+(mode==='forgot'?'/api/auth/forgot-password':'/api/auth/reset-password'),{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(mode==='forgot'?{email}:{token:params.get('token')??'',password})});
     const d=await r.json();if(!r.ok)throw Error(d.error||'Request failed');setMessage(mode==='forgot'?d.message:'Password reset. You can now sign in.');
    }
