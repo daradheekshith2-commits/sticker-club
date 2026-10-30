@@ -199,7 +199,7 @@ export function CustomStickerEditor({
   onClose,
 }: {
   image: Extract<PickedImage, { source: 'upload' }>;
-  onApply: (blob: Blob) => void;
+  onApply: (blob: Blob, width: number, height: number) => void;
   onClose: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -494,16 +494,36 @@ export function CustomStickerEditor({
     setApplyError('');
     try {
       await document.fonts.ready;
+      const selectedCrop = cropRect(editorRef.current.ratio, source, editorRef.current.rotation, editorRef.current.customCrop);
+      if (selectedCrop.width <= 0 || selectedCrop.height <= 0) throw new Error('Select a valid crop area.');
+      // Compose at high resolution, then extract ONLY the chosen crop bounds.
+      // Avoid the old 1200×1200 transparent padding on portrait and landscape crops.
+      const composition = document.createElement('canvas');
+      composition.width = EXPORT_SIZE;
+      composition.height = EXPORT_SIZE;
+      const fullContext = composition.getContext('2d');
+      if (!fullContext) throw new Error('Canvas is unavailable in this browser.');
+      const scale = EXPORT_SIZE / CANVAS_SIZE;
+      drawComposition(fullContext, source, editorRef.current, null, scale);
+
       const output = document.createElement('canvas');
-      output.width = EXPORT_SIZE;
-      output.height = EXPORT_SIZE;
+      const ratio = selectedCrop.width / selectedCrop.height;
+      output.width = Math.max(1, Math.round(ratio >= 1 ? EXPORT_SIZE : EXPORT_SIZE * ratio));
+      output.height = Math.max(1, Math.round(ratio >= 1 ? EXPORT_SIZE / ratio : EXPORT_SIZE));
       const context = output.getContext('2d');
-      if (!context) throw new Error('Canvas is unavailable in this browser.');
-      drawComposition(context, source, editorRef.current, null, EXPORT_SIZE / CANVAS_SIZE);
+      if (!context) throw new Error('Canvas export is unavailable in this browser.');
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(
+        composition,
+        selectedCrop.x * scale, selectedCrop.y * scale,
+        selectedCrop.width * scale, selectedCrop.height * scale,
+        0, 0, output.width, output.height,
+      );
       const blob = await new Promise<Blob>((resolve, reject) => {
         output.toBlob((result) => result ? resolve(result) : reject(new Error('The edited image could not be exported.')), 'image/png');
       });
-      onApply(blob);
+      onApply(blob, output.width, output.height);
     } catch (error) {
       setApplyError(error instanceof Error ? error.message : 'Could not apply these edits. Please try again.');
     } finally {
