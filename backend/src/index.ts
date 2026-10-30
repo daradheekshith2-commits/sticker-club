@@ -210,6 +210,14 @@ app.post('/api/orders',requireAuth,wrap(async(req,res)=>{
  res.status(201).json(order);
 }));
 app.get('/api/me/orders',requireAuth,wrap(async(req,res)=>{res.json(await db.order.findMany({where:{userId:req.session!.id},include:{items:true,customOrders:true},orderBy:{createdAt:'desc'}}));}));
+app.get('/api/me/orders/:id',requireAuth,wrap(async(req,res)=>{
+ const order=await db.order.findFirst({
+  where:{id:String(req.params.id),userId:req.session!.id},
+  include:{items:true,customOrders:true}
+ });
+ if(!order){res.status(404).json({error:'Order not found'});return;}
+ res.json(order);
+}));
 app.get('/api/products',wrap(async(_req,res)=>{res.json(await db.product.findMany({where:{active:true},include:{images:true,inventory:true,categories:true}}));}));
 app.get('/api/admin/stats',requireAuth,admin,wrap(async(_req,res)=>{
  const [customers,products,orders,pending,rev]=await Promise.all([db.user.count({where:{role:'CUSTOMER'}}),db.product.count(),db.order.count(),db.order.count({where:{status:'PENDING'}}),db.order.aggregate({_sum:{total:true},where:{status:{not:'CANCELLED'}}})]);
