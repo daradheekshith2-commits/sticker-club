@@ -430,7 +430,7 @@ export function CustomStickerEditor({
         panY: Math.max(-420, Math.min(420, drag.panY + dy)),
       });
     } else {
-      const crop = cropRect(editorRef.current.ratio, source);
+      const crop = cropRect(editorRef.current.ratio, source, editorRef.current.rotation);
       updateLive({
         ...editorRef.current,
         layers: editorRef.current.layers.map((layer) => layer.id === drag.layerId
