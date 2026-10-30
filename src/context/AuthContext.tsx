@@ -21,7 +21,12 @@ export function AuthProvider({children}:{children:ReactNode}){
  const logout=async()=>{await fetch(API+'/api/auth/logout',{method:'POST',credentials:'include'}).catch(()=>{});setUser(null);setToken(null);};
  const request=async<T,>(path:string,options:RequestInit={}):Promise<T>=>{
   let current=token;
-  if(!current){await refresh();throw Error('Session renewed. Please retry your action.');}
+  if(!current){
+   const restored=await fetch(API+'/api/auth/refresh',{method:'POST',credentials:'include'});
+   if(!restored.ok)throw Error('Please sign in again');
+   const restoredData=await restored.json() as {user:Account;accessToken:string};
+   current=restoredData.accessToken;setToken(current);setUser(restoredData.user);
+  }
   const send=(t:string)=>fetch(API+path,{...options,credentials:'include',headers:{'Content-Type':'application/json',...(options.headers||{}),Authorization:'Bearer '+t}});
   let r=await send(current);
   if(r.status===401){try{const x=await fetch(API+'/api/auth/refresh',{method:'POST',credentials:'include'});if(!x.ok)throw Error('Session expired');const data=await x.json();setToken(data.accessToken);setUser(data.user);current=data.accessToken;r=await send(current);}catch{setUser(null);setToken(null);throw Error('Please sign in again');}}
