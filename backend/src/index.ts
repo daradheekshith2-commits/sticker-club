@@ -143,7 +143,8 @@ app.post('/api/cart/items',requireAuth,wrap(async(req,res)=>{
  const {productId,quantity}=cartItemInput.parse(req.body);
  const product=await db.product.findFirst({where:{id:productId,active:true},include:{inventory:true}});
  if(!product){res.status(404).json({error:'Product unavailable'});return;}
- if(product.inventory&&product.inventory.quantity<quantity){res.status(409).json({error:'Not enough stock',available:product.inventory.quantity});return;}
+ if(!product.inventory){res.status(409).json({error:'Stock has not been configured for this product'});return;}
+ if(product.inventory.quantity<quantity){res.status(409).json({error:'Not enough stock',available:product.inventory.quantity});return;}
  const cart=await db.cart.upsert({where:{userId:req.session!.id},create:{userId:req.session!.id},update:{}});
  const item=await db.cartItem.upsert({where:{cartId_productId:{cartId:cart.id,productId}},create:{cartId:cart.id,productId,quantity},update:{quantity:{increment:quantity}}});
  res.status(201).json(item);
@@ -154,7 +155,8 @@ app.patch('/api/cart/items/:id',requireAuth,wrap(async(req,res)=>{
  if(!cart){res.status(404).json({error:'Cart not found'});return;}
  const item=await db.cartItem.findFirst({where:{id:String(req.params.id),cartId:cart.id},include:{product:{include:{inventory:true}}}});
  if(!item){res.status(404).json({error:'Cart item not found'});return;}
- if(item.product.inventory&&item.product.inventory.quantity<quantity){res.status(409).json({error:'Not enough stock',available:item.product.inventory.quantity});return;}
+ if(!item.product.inventory){res.status(409).json({error:'Stock is not configured for this product'});return;}
+ if(item.product.inventory.quantity<quantity){res.status(409).json({error:'Not enough stock',available:item.product.inventory.quantity});return;}
  res.json(await db.cartItem.update({where:{id:item.id},data:{quantity}}));
 }));
 app.delete('/api/cart/items/:id',requireAuth,wrap(async(req,res)=>{
@@ -190,6 +192,7 @@ app.post('/api/orders',requireAuth,wrap(async(req,res)=>{
   let total=0;
   const lines=cart.items.map(item=>{
    if(!item.product.active)throw Object.assign(new Error(item.product.name+' is unavailable'),{status:409});
+   if(!item.product.inventory)throw Object.assign(new Error('Inventory not configured for '+item.product.name),{status:409});
    const price=Number(item.product.price);
    total+=price*item.quantity;
    return {productId:item.productId,nameSnapshot:item.product.name,unitPrice:price.toFixed(2),quantity:item.quantity,inventory:item.product.inventory};
@@ -223,6 +226,14 @@ app.patch('/api/admin/products/:id',requireAuth,admin,wrap(async(req,res)=>{
  res.json(await db.product.update({where:{id:String(req.params.id)},data:{...data,price:data.price===undefined?undefined:data.price.toFixed(2)}}));
 }));
 app.delete('/api/admin/products/:id',requireAuth,admin,wrap(async(req,res)=>{res.json(await db.product.update({where:{id:String(req.params.id)},data:{active:false}}));}));
+app.put('/api/admin/inventory/:productId',requireAuth,admin,wrap(async(req,res)=>{
+ const {quantity}=z.object({quantity:z.number().int().min(0).max(1000000)}).parse(req.body);
+ const productId=String(req.params.productId);
+ const exists=await db.product.findUnique({where:{id:productId},select:{id:true}});
+ if(!exists){res.status(404).json({error:'Product not found'});return;}
+ const saved=await db.inventory.upsert({where:{productId},create:{productId,quantity},update:{quantity}});
+ res.json(saved);
+}));
 app.get('/api/admin/orders',requireAuth,admin,wrap(async(_req,res)=>{res.json(await db.order.findMany({include:{items:true,user:{select:{id:true,name:true,email:true}}},orderBy:{createdAt:'desc'}}));}));
 app.patch('/api/admin/orders/:id',requireAuth,admin,wrap(async(req,res)=>{
  const {status}=z.object({status:z.enum(['PENDING','CONFIRMED','PROCESSING','SHIPPED','COMPLETED','CANCELLED'])}).parse(req.body);
