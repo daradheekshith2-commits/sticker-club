@@ -6,7 +6,7 @@
  * Frontend prototype: images are not uploaded anywhere, no order is placed.
  */
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { LuInfo, LuRefreshCw, LuShoppingBag, LuTrash2, LuTriangleAlert } from 'react-icons/lu';
+import { LuCrop, LuInfo, LuRefreshCw, LuShoppingBag, LuTrash2, LuTriangleAlert } from 'react-icons/lu';
 import { brand } from '../config/brand';
 import { useCart } from '../context/CartContext';
 import {
@@ -24,6 +24,7 @@ import { customStickerTotal, customStickerUnitPrice, getStickerFinish, getSticke
 import { formatPrice } from '../utils/format';
 import { objectUrls } from '../utils/objectUrls';
 import { CustomStickerPreview } from '../components/custom/CustomStickerPreview';
+import { CustomStickerEditor } from '../components/custom/CustomStickerEditor';
 import { ImageSourcePicker } from '../components/image/ImageSourcePicker';
 import { QuantitySelector } from '../components/product/QuantitySelector';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
@@ -81,6 +82,7 @@ export function CreateStickersPage() {
   const { addCustomSticker, openCart } = useCart();
   const [image, setImage] = useState<PickedImage | null>(null);
   const [replacing, setReplacing] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [sizeId, setSizeId] = useState<string>(defaultCustomSticker.sizeId);
   const [finishId, setFinishId] = useState(defaultCustomSticker.finishId);
   const [shape, setShape] = useState<CustomStickerShape>(defaultCustomSticker.shape);
@@ -101,6 +103,7 @@ export function CreateStickersPage() {
     held.current = img;
     setImage(img);
     setReplacing(false);
+    setEditing(false);
     setRights(false); // a new image needs a new confirmation
     setAdded(null);
   };
@@ -108,6 +111,7 @@ export function CreateStickersPage() {
     release(held.current);
     held.current = null;
     setImage(null);
+    setEditing(false);
     setRights(false);
   };
 
@@ -186,13 +190,40 @@ export function CreateStickersPage() {
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setReplacing(true)} className="btn-ghost px-4 py-2">
+                  {image.source === 'upload' && (
+                    <button type="button" onClick={() => setEditing((open) => !open)} className="btn-primary px-4 py-2">
+                      <LuCrop aria-hidden /> {editing ? 'Close editor' : 'Edit image & add text'}
+                    </button>
+                  )}
+                  <button type="button" onClick={() => { setEditing(false); setReplacing(true); }} className="btn-ghost px-4 py-2">
                     <LuRefreshCw aria-hidden /> Replace image
                   </button>
                   <button type="button" onClick={removeImage} className="btn px-4 py-2 text-ink-soft hover:text-ink">
                     <LuTrash2 aria-hidden /> Remove
                   </button>
                 </div>
+                {editing && image.source === 'upload' && (
+                  <CustomStickerEditor
+                    image={image}
+                    onClose={() => setEditing(false)}
+                    onApply={(blob) => {
+                      const editedUrl = objectUrls.create(blob);
+                      const baseName = image.fileName.replace(/\.[^.]+$/, '');
+                      chooseImage({
+                        source: 'upload',
+                        objectUrl: editedUrl,
+                        fileName: 'edited-' + baseName + '.png',
+                        width: 1200,
+                        height: 1200,
+                      });
+                    }}
+                  />
+                )}
+                {image.source === 'url' && (
+                  <p className="mt-3 rounded-lg bg-paper p-3 text-xs text-ink-soft">
+                    Crop, rotate and text editing are available for uploaded files. External image links may block browser-based editing, so upload the image from your device to personalise it.
+                  </p>
+                )}
                 {lowRes && (
                   <p role="status" className="mt-3 flex gap-2 rounded-xl border-2 border-tomato/40 bg-tomato/10 p-3 text-sm">
                     <LuTriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
