@@ -44,6 +44,17 @@ async function seedCatalogue() {
       });
       created++;
     }
+    if (product.variants?.length) {
+      await db.productVariant.createMany({
+        data: product.variants.map(variant => ({
+          productId: product.id,
+          id: variant.id,
+          label: variant.label,
+          price: variant.price.toFixed(2),
+        })),
+        skipDuplicates: true,
+      });
+    }
   }
   console.log('Catalogue seed: ' + created + ' new products, ' + products.length + ' frontend products inspected.');
 }
