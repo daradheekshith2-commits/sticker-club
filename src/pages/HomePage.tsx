@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LuArrowLeft, LuArrowRight } from 'react-icons/lu';
+import { LuArrowLeft, LuArrowRight, LuGift, LuHeart, LuImagePlus, LuMail, LuStamp } from 'react-icons/lu';
 import { products } from '../data/products';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from '../router/router';
@@ -11,56 +11,119 @@ import { ProductGrid } from '../components/product/ProductCard';
 import { SectionHeading } from '../components/ui/SectionHeading';
 import { ShopByVibe } from '../components/vibes/ShopByVibe';
 import { AnimatedStickerHero } from '../components/home/AnimatedStickerHero';
-import { packSizes, packSurprise } from '../data/packBuilder';
 
 const orderable = (category: Category) => products.filter((p) => p.category === category && isPurchasable(p));
 const lowestPrice = (category: Category) => Math.min(...orderable(category).map((p) => p.price));
 
-// ---------- Two equal doors: stickers and posters ----------
+// ---------- Shop categories ----------
 function CategoryDoors() {
-  const doors: { category: Category; title: string; pitch: string; slug: string; color: string; extra: string }[] = [
+  const doors: {
+    id: string;
+    title: string;
+    pitch: string;
+    eyebrow: string;
+    cta: string;
+    to: string;
+    category: Category | null;
+    slug: string | null;
+    icon: 'gift' | 'image' | null;
+    color: string;
+  }[] = [
     {
-      category: 'stickers',
+      id: 'stickers',
       title: 'Stickers',
-      pitch: 'Mini stickers, sheets and themed packs for laptops, notebooks, bottles and phone cases.',
+      pitch: 'Mini designs, sheets and themed packs for your everyday things.',
+      eyebrow: 'STICKER ESSENTIALS',
+      cta: 'SHOP STICKERS',
+      to: shopUrl({ category: 'stickers' }),
+      category: 'stickers',
       slug: 'campus-survival-sheet',
+      icon: null,
       color: '#FFD447',
-      extra: 'Minis · sheets · packs',
     },
     {
-      category: 'posters',
+      id: 'posters',
       title: 'Posters',
-      pitch: 'Bold prints and ready-made wall packs for your room, hostel or PG.',
+      pitch: 'Give your room, hostel or workspace a little more personality.',
+      eyebrow: 'WALL ART',
+      cta: 'SHOP POSTERS',
+      to: shopUrl({ category: 'posters' }),
+      category: 'posters',
       slug: 'desk-wall-pack',
+      icon: null,
       color: '#8FD3FF',
-      extra: `${allSizes().join(' · ')} · wall packs`,
+    },
+    {
+      id: 'gifts',
+      title: 'Gifts',
+      pitch: 'Thoughtful little finds, collectible surprises and gifts worth sharing.',
+      eyebrow: 'GIFTABLE GOODIES',
+      cta: 'EXPLORE GIFTS',
+      to: '/collectibles',
+      category: null,
+      slug: null,
+      icon: 'gift',
+      color: '#FFB3D1',
+    },
+    {
+      id: 'shop-your-own',
+      title: 'Shop Your Own',
+      pitch: 'Turn your own photo, drawing or idea into a custom sticker.',
+      eyebrow: 'MAKE IT PERSONAL',
+      cta: 'START CREATING',
+      to: '/create-your-stickers',
+      category: null,
+      slug: null,
+      icon: 'image',
+      color: '#A8F0DC',
     },
   ];
+
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6" aria-label="Shop by category">
-      <ul className="grid gap-4 md:grid-cols-[1.35fr_1fr]">
-        {doors.map((d) => {
-          const product = getProductBySlug(d.slug);
+    <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6" aria-label="Shop categories">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {doors.map((door) => {
+          const product = door.slug ? getProductBySlug(door.slug) : undefined;
           return (
-            <li key={d.category}>
+            <li key={door.id} className="min-w-0">
               <Link
-                to={shopUrl({ category: d.category })}
-                className="on-light group flex h-full flex-col-reverse gap-4 overflow-hidden rounded-[var(--radius-card)] border-2 border-ink p-6 transition-transform hover:-translate-y-1 sm:grid sm:grid-cols-[1fr_auto] sm:items-end md:p-8"
-                style={{ backgroundColor: d.color }}
+                to={door.to}
+                className="on-light group flex h-full min-h-[340px] flex-col overflow-hidden rounded-[var(--radius-card)] border-2 border-[#121212] p-5 transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(0,0,0,0.18)] md:p-6"
+                style={{ backgroundColor: door.color }}
               >
-                <div className="min-w-0">
-                  <p className="text-xs font-bold tracking-widest uppercase">{d.extra}</p>
-                  <h2 className="mt-2 text-5xl font-extrabold md:text-6xl">{d.title}</h2>
-                  <p className="mt-3 max-w-xs">{d.pitch}</p>
-                  <p className="mt-5 inline-flex flex-wrap items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-bold text-paper">
-                    {orderable(d.category).length} designs · from {formatPrice(lowestPrice(d.category))} <LuArrowRight aria-hidden />
-                  </p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-extrabold tracking-[0.16em] text-[#121212]/75">{door.eyebrow}</p>
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#121212] text-[#F4F0E8] transition-transform group-hover:translate-x-1">
+                    <LuArrowRight aria-hidden className="size-4" />
+                  </span>
                 </div>
-                {product && (
-                  <div className="w-28 shrink-0 overflow-hidden rounded-2xl border-2 border-ink sm:w-36 lg:w-44">
-                    <ProductImage product={product} className="aspect-square w-full transition-transform group-hover:scale-105" />
-                  </div>
-                )}
+                <div className="flex min-h-[142px] flex-1 items-center justify-center py-5">
+                  {product ? (
+                    <div className="w-full max-w-[180px] overflow-hidden rounded-2xl border-2 border-[#121212] bg-white shadow-[0_8px_18px_rgba(18,18,18,0.14)] transition-transform duration-200 group-hover:rotate-[-2deg] group-hover:scale-[1.03]">
+                      <ProductImage product={product} className="aspect-square w-full" />
+                    </div>
+                  ) : door.icon === 'gift' ? (
+                    <div className="grid size-32 place-items-center rounded-[2rem] border-2 border-[#121212] bg-white/75 shadow-[0_8px_18px_rgba(18,18,18,0.12)] transition-transform duration-200 group-hover:rotate-[-4deg] group-hover:scale-105">
+                      <LuGift aria-hidden className="size-[4.25rem] text-[#121212]" strokeWidth={1.6} />
+                    </div>
+                  ) : door.icon === 'image' ? (
+                    <div className="grid size-32 place-items-center rounded-[2rem] border-2 border-[#121212] bg-white/75 shadow-[0_8px_18px_rgba(18,18,18,0.12)] transition-transform duration-200 group-hover:rotate-[4deg] group-hover:scale-105">
+                      <LuImagePlus aria-hidden className="size-[4.25rem] text-[#121212]" strokeWidth={1.6} />
+                    </div>
+                  ) : null}
+                </div>
+                <div>
+                  {door.category && (
+                    <p className="text-[10px] font-bold tracking-wide text-[#121212]/70">
+                      {orderable(door.category).length} designs · from {formatPrice(lowestPrice(door.category))}
+                    </p>
+                  )}
+                  <h2 className="mt-1 font-display text-3xl leading-none font-extrabold tracking-tight text-[#121212]">{door.title}</h2>
+                  <p className="mt-2 min-h-[2.8rem] text-sm leading-relaxed text-[#121212]/80">{door.pitch}</p>
+                  <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#121212] px-4 py-2.5 text-[11px] font-extrabold tracking-[0.08em] text-[#F4F0E8] transition-colors group-hover:bg-[#263b35]">
+                    {door.cta} <LuArrowRight aria-hidden className="size-4" />
+                  </span>
+                </div>
               </Link>
             </li>
           );
@@ -75,60 +138,68 @@ function CategoryDoors() {
  * are a quiet row of links so the homepage doesn't turn into eight banners.
  */
 function Collect() {
-  const mystery = getProductBySlug('mystery-pack');
-  const more = [
-    { label: 'Matching duos', to: '/matching-duos' },
-    { label: 'Secret messages', to: '/secret-messages' },
-    { label: 'Rare collections', to: '/rare-collections' },
-    { label: 'Collector passport', to: '/collector-passport' },
-    { label: 'Vote for the next drop', to: '/vote-next-drop' },
+  const features = [
+    {
+      to: '/matching-duos',
+      eyebrow: 'BETTER TOGETHER',
+      title: 'Matching Duos',
+      description: 'Two original sticker designs made to go together. Keep both or share one with someone.',
+      cta: 'EXPLORE DUOS',
+      Icon: LuHeart,
+      accent: '#A8F0DC',
+    },
+    {
+      to: '/secret-messages',
+      eyebrow: 'A LITTLE MYSTERY',
+      title: 'Secret Messages',
+      description: 'Pick a message sticker and discover the personal note sealed inside.',
+      cta: 'OPEN THE SECRET',
+      Icon: LuMail,
+      accent: '#D90A1F',
+    },
+    {
+      to: '/collector-passport',
+      eyebrow: 'YOUR COLLECTION JOURNEY',
+      title: 'Collector Passport',
+      description: 'Preview the stamp-card idea and see how your Sticker Club collection could grow.',
+      cta: 'VIEW PASSPORT',
+      Icon: LuStamp,
+      accent: '#8FD3FF',
+    },
   ];
+
   return (
-    <section aria-labelledby="collect-title" className="mx-auto max-w-7xl px-4 pt-16 sm:px-6">
+    <section aria-labelledby="collect-title" className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
       <SectionHeading
         id="collect-title"
-        eyebrow="Collect them all"
-        title="Packs with a little surprise."
-        action={
-          <Link to="/collectibles" className="btn-ghost">
-            All collectibles <LuArrowRight aria-hidden />
-          </Link>
-        }
+        eyebrow="MORE TO EXPLORE"
+        title="Little things worth discovering."
       />
-      <div className="grid gap-4 md:grid-cols-[1.35fr_1fr]">
-        {mystery && (
-          <Link to="/product/mystery-pack" className="group grid items-center overflow-hidden rounded-[var(--radius-card)] border-2 border-ink bg-white sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <ProductImage product={mystery} className="aspect-square w-full transition-transform group-hover:scale-[1.03]" />
-            <span className="p-5 md:p-6">
-              <span className="eyebrow">Mystery sticker pack</span>
-              <span className="mt-2 block font-display text-3xl leading-none font-extrabold md:text-4xl">5 guaranteed + 1 mystery</span>
-              <span className="mt-2 block text-ink-soft">Pick a series theme. You’ll know where the five come from — only the sixth is a surprise.</span>
-              <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-bold text-paper">
-                {formatPrice(mystery.price)} · choose a theme <LuArrowRight aria-hidden />
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {features.map((feature) => (
+          <li key={feature.to} className="min-w-0">
+            <Link
+              to={feature.to}
+              className="group flex h-full min-h-[270px] flex-col rounded-[var(--radius-card)] border border-[#315e53] bg-[#071b18] p-6 transition duration-200 hover:-translate-y-1 hover:border-[#a8f0dc] hover:shadow-[0_14px_30px_rgba(0,0,0,0.22)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="grid size-14 place-items-center rounded-2xl border border-[#f4f0e8]/15" style={{ backgroundColor: feature.accent }}>
+                  <feature.Icon aria-hidden className={`size-7 ${feature.accent === '#D90A1F' ? 'text-[#F4F0E8]' : 'text-[#03110f]'}`} strokeWidth={1.8} />
+                </span>
+                <span className="grid size-9 place-items-center rounded-full border border-[#315e53] text-[#a8f0dc] transition-all group-hover:border-[#a8f0dc] group-hover:bg-[#a8f0dc] group-hover:text-[#03110f]">
+                  <LuArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </div>
+              <p className="mt-6 text-[10px] font-extrabold tracking-[0.16em]" style={{ color: feature.accent }}>{feature.eyebrow}</p>
+              <h3 className="mt-2 font-display text-2xl font-extrabold text-[#F4F0E8]">{feature.title}</h3>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-[#B5C7C1]">{feature.description}</p>
+              <span className="mt-6 inline-flex w-fit items-center gap-2 text-xs font-extrabold tracking-[0.08em] text-[#a8f0dc] transition-colors group-hover:text-[#F4F0E8]">
+                {feature.cta} <LuArrowRight aria-hidden className="size-4" />
               </span>
-            </span>
-          </Link>
-        )}
-        <Link to="/build-your-pack" className="group flex flex-col justify-between rounded-[var(--radius-card)] border-2 border-ink bg-lime p-5 md:p-6">
-          <span>
-            <span className="eyebrow">Build your own pack</span>
-            <span className="mt-2 block font-display text-3xl leading-none font-extrabold">Your picks, plus one on us</span>
-            <span className="mt-2 block">
-              Choose {packSizes.map((x) => x.count).join(' or ')} designs from the range and get {packSurprise.count} surprise sticker in your theme.
-            </span>
-          </span>
-          <span className="mt-5 inline-flex items-center gap-1 font-bold group-hover:underline">
-            From {formatPrice(Math.min(...packSizes.map((x) => x.price)))} · start building <LuArrowRight aria-hidden />
-          </span>
-        </Link>
-      </div>
-      <nav aria-label="More collectibles" className="mt-4 flex flex-wrap gap-2">
-        {more.map((m) => (
-          <Link key={m.to} to={m.to} className="chip">
-            {m.label}
-          </Link>
+            </Link>
+          </li>
         ))}
-      </nav>
+      </ul>
     </section>
   );
 }

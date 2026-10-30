@@ -44,10 +44,10 @@ export function AnimatedStickerHero() {
               Shop stickers <LuArrowRight aria-hidden className="size-5" />
             </Link>
             <Link
-              to="/create-your-stickers"
+              to={shopUrl({ category: 'posters' })}
               className="inline-flex items-center gap-3 rounded-full border-2 border-cinema-mint/70 px-7 py-4 text-base font-extrabold tracking-wide text-cinema-mint uppercase transition-colors hover:bg-cinema-mint/10 focus-visible:outline-cinema-mint"
             >
-              Make your own <LuArrowRight aria-hidden className="size-5" />
+              Shop posters <LuArrowRight aria-hidden className="size-5" />
             </Link>
           </div>
           <p className="mt-10 flex items-center gap-3 text-xs font-bold tracking-[0.26em] text-cinema-mint uppercase">
