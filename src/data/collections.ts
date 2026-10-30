@@ -18,7 +18,7 @@ export interface Collection {
 export const collections: Collection[] = [
   { id: 'anime', name: 'Anime', blurb: 'Anime-inspired art, expressive characters and collectible designs.', color: '#FFD447', motif: 'animeFace', featured: true },
   { id: 'movies', name: 'Movies', blurb: 'Cinematic vibes, iconic genres and movie-inspired art.', color: '#8FD3FF', motif: 'clapper', featured: true },
-  { id: 'quotes', name: 'Life Quotes', blurb: 'Little reminders, big feelings and words to live by.', color: '#FF5B2E', motif: 'quoteMarks', featured: true },
+  { id: 'quotes', name: 'Cars & Bikes', blurb: 'Original cars, motorcycles, track-day graphics and racing-inspired designs.', color: '#FF5B2E', motif: 'car', featured: true },
   {
     id: 'marvel',
     name: 'Marvel',
