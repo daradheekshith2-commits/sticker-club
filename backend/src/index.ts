@@ -87,10 +87,15 @@ app.post('/api/auth/reset-password',authLimit,sameOrigin,wrap(async(req,res)=>{
  const {token,password}=z.object({token:z.string().min(20),password:z.string().min(12).max(128)}).parse(req.body);
  const rec=await db.passwordResetToken.findUnique({where:{tokenHash:hash(token)}});
  if(!rec||rec.usedAt||rec.expiresAt<=new Date()){res.status(400).json({error:'Invalid or expired reset token'});return;}
- const changed=await db.passwordResetToken.updateMany({where:{id:rec.id,usedAt:null},data:{usedAt:new Date()}});
- if(changed.count!==1){res.status(400).json({error:'Reset token already used'});return;}
- await db.user.update({where:{id:rec.userId},data:{passwordHash:await bcrypt.hash(password,12)}});
- await db.refreshToken.updateMany({where:{userId:rec.userId,revokedAt:null},data:{revokedAt:new Date()}});
+ const passwordHash=await bcrypt.hash(password,12);
+ const completed=await db.$transaction(async(tx)=>{
+  const changed=await tx.passwordResetToken.updateMany({where:{id:rec.id,usedAt:null,expiresAt:{gt:new Date()}},data:{usedAt:new Date()}});
+  if(changed.count!==1)return false;
+  await tx.user.update({where:{id:rec.userId},data:{passwordHash}});
+  await tx.refreshToken.updateMany({where:{userId:rec.userId,revokedAt:null},data:{revokedAt:new Date()}});
+  return true;
+ });
+ if(!completed){res.status(400).json({error:'Reset token already used or expired'});return;}
  res.json({ok:true});
 }));
 app.get('/api/me',requireAuth,wrap(async(req,res)=>{const u=await db.user.findUnique({where:{id:req.session!.id}});if(!u){res.status(404).json({error:'Not found'});return;}res.json(safeUser(u));}));
@@ -104,6 +109,28 @@ app.post('/api/me/addresses',requireAuth,wrap(async(req,res)=>{
  const data=addressInput.parse(req.body);
  const a=await db.$transaction(async(tx)=>{if(data.isDefault)await tx.address.updateMany({where:{userId:req.session!.id},data:{isDefault:false}});return tx.address.create({data:{...data,userId:req.session!.id}});});
  res.status(201).json(a);
+}));
+app.patch('/api/me/addresses/:id',requireAuth,wrap(async(req,res)=>{
+ const data=addressInput.partial().parse(req.body);
+ if(Object.keys(data).length===0){res.status(400).json({error:'Provide at least one address field'});return;}
+ const existing=await db.address.findFirst({where:{id:String(req.params.id),userId:req.session!.id}});
+ if(!existing){res.status(404).json({error:'Not found'});return;}
+ const updated=await db.$transaction(async(tx)=>{
+  if(data.isDefault)await tx.address.updateMany({where:{userId:req.session!.id},data:{isDefault:false}});
+  return tx.address.update({where:{id:existing.id},data});
+ });
+ res.json(updated);
+}));
+app.post('/api/me/addresses/:id/default',requireAuth,wrap(async(req,res)=>{
+ const result=await db.$transaction(async(tx)=>{
+  const owned=await tx.address.findFirst({where:{id:String(req.params.id),userId:req.session!.id},select:{id:true}});
+  if(!owned)return false;
+  await tx.address.updateMany({where:{userId:req.session!.id},data:{isDefault:false}});
+  await tx.address.update({where:{id:owned.id},data:{isDefault:true}});
+  return true;
+ });
+ if(!result){res.status(404).json({error:'Not found'});return;}
+ res.json({ok:true});
 }));
 app.delete('/api/me/addresses/:id',requireAuth,wrap(async(req,res)=>{
  const result=await db.address.deleteMany({where:{id:String(req.params.id),userId:req.session!.id}});
