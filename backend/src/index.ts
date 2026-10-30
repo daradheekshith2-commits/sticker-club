@@ -28,11 +28,16 @@ const issue=async(res:Response,u:Session)=>{
  res.cookie('sc_refresh',raw,{...cookieOptions,maxAge:30*86400000});
  return access(u);
 };
-const requireAuth=(req:Authed,res:Response,next:NextFunction)=>{
- const b=req.headers.authorization;if(!b?.startsWith('Bearer ')){res.status(401).json({error:'Login required'});return;}
- try{const p=jwt.verify(b.slice(7),config.JWT_SECRET,{algorithms:['HS256']});
- if(typeof p==='string'||!p.sub||(p.role!=='ADMIN'&&p.role!=='CUSTOMER'))throw Error('invalid');
- req.session={id:String(p.sub),role:p.role};next();}catch{res.status(401).json({error:'Invalid or expired session'});}
+const requireAuth=async(req:Authed,res:Response,next:NextFunction)=>{
+ const b=req.headers.authorization;
+ if(!b?.startsWith('Bearer ')){res.status(401).json({error:'Login required'});return;}
+ try{
+  const p=jwt.verify(b.slice(7),config.JWT_SECRET,{algorithms:['HS256']});
+  if(typeof p==='string'||!p.sub)throw Error('invalid');
+  const u=await db.user.findUnique({where:{id:String(p.sub)},select:{id:true,role:true}});
+  if(!u){res.status(401).json({error:'Account unavailable'});return;}
+  req.session={id:u.id,role:u.role};next();
+ }catch{res.status(401).json({error:'Invalid or expired session'});}
 };
 const admin=(req:Authed,res:Response,next:NextFunction)=>{if(req.session?.role!=='ADMIN'){res.status(403).json({error:'Forbidden'});return;}next();};
 const sameOrigin=(req:Request,res:Response,next:NextFunction)=>{
