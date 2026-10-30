@@ -163,43 +163,48 @@ function FeaturedRow({ category, eyebrow, title, linkLabel }: { category: Catego
     setRandomItems(nextItems);
   };
 
+  const action = category === 'stickers' ? (
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-[#315e53] bg-[#071b18] p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
+        <span className="hidden px-2 text-[10px] font-extrabold tracking-[0.16em] text-[#a8f0dc] sm:inline">DISCOVER</span>
+        <button
+          type="button"
+          onClick={showRandomStickers}
+          className="grid size-10 place-items-center rounded-full border border-[#315e53] bg-[#0b2420] text-[#a8f0dc] transition duration-200 hover:border-[#a8f0dc] hover:bg-[#a8f0dc] hover:text-[#03110f] active:scale-95"
+          aria-label="Show another random selection of stickers"
+          title="Discover random stickers"
+        >
+          <LuArrowLeft aria-hidden className="size-[18px]" />
+        </button>
+        <button
+          type="button"
+          onClick={showRandomStickers}
+          className="grid size-10 place-items-center rounded-full border border-[#d90a1f] bg-[#d90a1f] text-[#f4f0e8] shadow-[0_3px_12px_rgba(217,10,31,0.24)] transition duration-200 hover:border-[#a8f0dc] hover:bg-[#a8f0dc] hover:text-[#03110f] active:scale-95"
+          aria-label="Show another random selection of stickers"
+          title="Discover random stickers"
+        >
+          <LuArrowRight aria-hidden className="size-[18px]" />
+        </button>
+      </div>
+      <Link to={shopUrl({ category })} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-[#5d9d8f] px-5 py-3 text-sm font-bold text-[#a8f0dc] transition hover:border-[#a8f0dc] hover:bg-[#a8f0dc] hover:text-[#03110f]">
+        {linkLabel} <LuArrowRight aria-hidden />
+      </Link>
+    </div>
+  ) : (
+    <Link to={shopUrl({ category })} className="btn-ghost">
+      {linkLabel} <LuArrowRight aria-hidden />
+    </Link>
+  );
+
   return (
     <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-6" aria-labelledby={`featured-${category}`}>
       <SectionHeading
         id={`featured-${category}`}
         eyebrow={eyebrow}
         title={title}
-        action={
-          <Link to={shopUrl({ category })} className="btn-ghost">
-            {linkLabel} <LuArrowRight aria-hidden />
-          </Link>
-        }
+        action={action}
       />
-      <div className={category === 'stickers' ? 'relative' : undefined}>
-        <ProductGrid products={items} />
-        {category === 'stickers' && (
-          <>
-            <button
-              type="button"
-              onClick={showRandomStickers}
-              className="absolute left-0 top-[25%] z-20 grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[#5d9d8f] bg-[#03110f] text-[#a8f0dc] shadow-lg transition hover:bg-[#a8f0dc] hover:text-[#03110f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a8f0dc] sm:left-[-1.15rem] sm:size-12"
-              aria-label="Show a random selection of stickers"
-              title="Shuffle stickers"
-            >
-              <LuArrowLeft aria-hidden className="size-5" />
-            </button>
-            <button
-              type="button"
-              onClick={showRandomStickers}
-              className="absolute right-0 top-[25%] z-20 grid size-10 translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[#5d9d8f] bg-[#03110f] text-[#a8f0dc] shadow-lg transition hover:bg-[#a8f0dc] hover:text-[#03110f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a8f0dc] sm:right-[-1.15rem] sm:size-12"
-              aria-label="Show a random selection of stickers"
-              title="Shuffle stickers"
-            >
-              <LuArrowRight aria-hidden className="size-5" />
-            </button>
-          </>
-        )}
-      </div>
+      <ProductGrid products={items} />
     </section>
   );
 }
