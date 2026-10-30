@@ -68,3 +68,23 @@ All /api/me routes require a valid bearer access token. All /api/admin routes re
 ## Verification status
 
 Source files have been added, but npm install, Prisma generation, migration execution, browser testing and API integration tests have **not** been run in the source-editing environment. These checks are mandatory before production use.
+
+## Clean database initialization order
+
+The committed migrations run in lexical order:
+
+1. `20261030110000_init`: creates all base tables, constraints, and core enums.
+2. `20261030120000_cart_checkout`: adds PaymentStatus, order-address snapshots and cart-item uniqueness.
+
+From the backend directory, after configuring the local PostgreSQL role/database and `.env`, run:
+
+```bash
+npm run db:generate
+npx prisma migrate deploy
+npm run db:seed
+npm run build
+```
+
+These commands have **not been executed against a clean database here**. If Prisma reports migration drift or a schema mismatch, stop and investigate before editing applied migrations. Do not use `prisma db push` as a substitute for migration history or reset a database containing real data.
+
+The seed loads `../src/data/products.ts` and `../src/data/collections.ts` through `tsx`. Run seed from a checkout containing both the frontend and backend folders. It seeds only new products, never overwrites an existing product's live price, and does not create fictional inventory. The frontend shop still reads its bundled catalogue rather than the database and is **not** safe for real checkout until that gap is resolved.
