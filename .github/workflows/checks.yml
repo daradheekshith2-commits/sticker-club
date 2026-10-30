@@ -1,0 +1,41 @@
+name: Sticker Club checks
+
+on:
+  push:
+    branches:
+      - design/category-cards-reference-20261030
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql://example:example@localhost:5432/stickerclub?schema=public
+      JWT_SECRET: example_only_ci_not_used_as_deployed_credentials
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run db:generate
+      - run: npx prisma validate
+      - run: npm run build
