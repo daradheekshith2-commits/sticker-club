@@ -64,6 +64,16 @@ test('end-to-end local API: registration, ownership, stock and unpaid checkout',
   const customerOrders=await api('/api/me/orders',{},token);
   assert.equal(customerOrders.status,200);
   assert.equal(customerOrders.body.length,1);
+  const ownedOrder=await api('/api/me/orders/'+order.body.id,{},token);
+  assert.equal(ownedOrder.status,200);
+  const another=await api('/api/auth/register',{method:'POST',body:JSON.stringify({
+   name:'Second Test Customer',
+   email:'ci-'+randomUUID()+'@example.test',
+   password:'Test-only-passphrase-4567'
+  })});
+  assert.equal(another.status,201);
+  const forbiddenOrder=await api('/api/me/orders/'+order.body.id,{},another.body.accessToken);
+  assert.equal(forbiddenOrder.status,404,'Another customer must not see this order.');
   const relog=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password:'Test-only-passphrase-4567'})});
   assert.equal(relog.status,200);
   assert.equal(relog.body.user.role,'CUSTOMER');
