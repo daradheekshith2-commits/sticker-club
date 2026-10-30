@@ -5,7 +5,7 @@ import {Link} from '../../router/router';
 import type {ProductCartLine} from '../../utils/cart';
 
 type Address={id:string;recipient:string;line1:string;city:string;state:string;postalCode:string;isDefault:boolean};
-type ServerCart={items:Array<{productId:string;quantity:number;product:{name:string;price:string;active:boolean;inventory:{quantity:number}|null}}>} ;
+type ServerCart={items:Array<{productId:string;variantId:string;quantity:number;product:{name:string;price:string;active:boolean;variants:Array<{id:string;label:string;price:string}>;inventory:{quantity:number}|null}}>} ;
 export type OrderReceipt={id:string;total:string;paymentStatus:string;status:string};
 
 /** Database checkout for unconfigured catalogue items only.
@@ -23,8 +23,8 @@ export function LiveOrderCheckout({onCreated}:{onCreated?:(order:OrderReceipt)=>
  const [error,setError]=useState('');
  const [order,setOrder]=useState<OrderReceipt|null>(null);
  const [preview,setPreview]=useState<ServerCart|null>(null);
- const standard=lines.filter((l):l is ProductCartLine=>l.type==='product'&&!l.variant);
- const unsupported=lines.filter(l=>l.type!=='product'||Boolean(l.variant));
+ const standard=lines.filter((l):l is ProductCartLine=>l.type==='product');
+ const unsupported=lines.filter(l=>l.type!=='product');
  useEffect(()=>{
   if(!user)return;
   void request<Address[]>('/api/me/addresses').then(a=>{setAddresses(a);setSelected(a.find(x=>x.isDefault)?.id??a[0]?.id??'');}).catch(e=>setError(String(e)));
@@ -45,7 +45,7 @@ export function LiveOrderCheckout({onCreated}:{onCreated?:(order:OrderReceipt)=>
    // This prevents stale quantities being ordered on repeated reviews.
    await request('/api/cart',{method:'DELETE'});
    for(const line of standard){
-    await request('/api/cart/items',{method:'POST',body:JSON.stringify({productId:line.product.id,quantity:line.quantity})});
+    await request('/api/cart/items',{method:'POST',body:JSON.stringify({productId:line.product.id,variantId:line.variant?.id,quantity:line.quantity})});
    }
    const data=await request<ServerCart>('/api/cart');
    if(data.items.length!==standard.length)throw Error('The server cart did not match your order. No order has been placed.');
@@ -75,8 +75,8 @@ export function LiveOrderCheckout({onCreated}:{onCreated?:(order:OrderReceipt)=>
  </section>;
  return <section className="rounded-2xl border border-ink/20 bg-white p-6">
   <h2 className="text-2xl font-extrabold">Order using your account</h2>
-  <p className="mt-2 text-sm text-ink-soft">Only standard products without variant or customization options are supported. Prices are recalculated by the backend. No online payment is collected.</p>
-  {unsupported.length>0&&<p className="mt-3 rounded-lg border border-ink/20 p-3 text-sm" role="status">{unsupported.length} customized or size-specific line(s) cannot be submitted as an order yet. Remove these from the cart to enable database checkout; the preview below remains available.</p>}
+  <p className="mt-2 text-sm text-ink-soft">Catalogue products and their offered sizes are supported; uploaded artwork and custom configurations are not supported yet. Prices are recalculated by the backend. No online payment is collected.</p>
+  {unsupported.length>0&&<p className="mt-3 rounded-lg border border-ink/20 p-3 text-sm" role="status">{unsupported.length} custom design or bundle line(s) cannot be submitted as an order yet. Remove these from the cart to enable database checkout; the preview below remains available.</p>}
   {standard.length===0&&<p className="mt-3 text-sm">There are no eligible standard products in this cart.</p>}
   <label className="mt-5 block text-sm font-bold">Shipping address
    <select className="field-input mt-2" value={selected} onChange={e=>{setSelected(e.target.value);setPreview(null);}}>
@@ -101,8 +101,8 @@ export function LiveOrderCheckout({onCreated}:{onCreated?:(order:OrderReceipt)=>
   {!preview?<button type="button" className="btn-primary mt-5 w-full" onClick={()=>void prepare()} disabled={working||!selected||unsupported.length>0||standard.length===0}>{working?'Checking database…':'Review server prices and availability'}</button>:
    <div className="mt-5 rounded-xl border-2 border-ink/20 p-4">
     <h3 className="text-xl font-bold">Server-side price review</h3>
-    {preview.items.map(item=><div key={item.productId} className="mt-2 flex justify-between gap-3 text-sm"><span>{item.product.name} × {item.quantity}</span><strong>₹{(Number(item.product.price)*item.quantity).toFixed(2)}</strong></div>)}
-    <div className="mt-3 flex justify-between border-t pt-3 font-extrabold"><span>Server subtotal</span><span>₹{preview.items.reduce((total,item)=>total+Number(item.product.price)*item.quantity,0).toFixed(2)}</span></div>
+    {preview.items.map(item=><div key={item.productId} className="mt-2 flex justify-between gap-3 text-sm"><span>{item.product.name}{item.variantId?' · '+(item.product.variants.find(v=>v.id===item.variantId)?.label??item.variantId):''} × {item.quantity}</span><strong>₹{(Number(item.product.variants.find(v=>v.id===item.variantId)?.price??item.product.price)*item.quantity).toFixed(2)}</strong></div>)}
+    <div className="mt-3 flex justify-between border-t pt-3 font-extrabold"><span>Server subtotal</span><span>₹{preview.items.reduce((total,item)=>total+Number(item.product.variants.find(v=>v.id===item.variantId)?.price??item.product.price)*item.quantity,0).toFixed(2)}</span></div>
     <p className="mt-2 text-xs text-ink-soft">This order will be stored with payment pending. Charges and taxes are not collected here.</p>
     <button type="button" className="btn-primary mt-4 w-full" onClick={()=>void place()} disabled={working||!selected}>{working?'Creating order…':'Create unpaid order'}</button>
     <button type="button" className="btn-ghost mt-2 w-full" onClick={()=>setPreview(null)}>Change cart or address</button>
