@@ -1,10 +1,9 @@
 import { LuArrowRight } from 'react-icons/lu';
-import { productTypeLabels } from '../data/collections';
 import { products } from '../data/products';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from '../router/router';
-import type { Category, ProductType } from '../types/product';
-import { allSizes, getProductBySlug, getStartingPrice, isPurchasable, shopUrl, sortProducts } from '../utils/catalogue';
+import type { Category } from '../types/product';
+import { allSizes, getProductBySlug, isPurchasable, shopUrl, sortProducts } from '../utils/catalogue';
 import { formatPrice } from '../utils/format';
 import { ProductImage } from '../components/art/ProductArt';
 import { ProductGrid } from '../components/product/ProductCard';
@@ -155,110 +154,6 @@ function FeaturedRow({ category, eyebrow, title, linkLabel }: { category: Catego
   );
 }
 
-const formats: { type: ProductType; slug: string; pitch: string }[] = [
-  { type: 'single', slug: 'chai-first', pitch: 'One design, one sticker.' },
-  { type: 'sheet', slug: 'campus-survival-sheet', pitch: 'Several minis on one sheet.' },
-  { type: 'pack', slug: 'garage-pack', pitch: 'A themed bundle of separate stickers.' },
-  { type: 'poster', slug: 'redline-poster', pitch: `Pick a size: ${allSizes().join(', ')}.` },
-  { type: 'poster-set', slug: 'room-reset-poster-set', pitch: 'Matching prints that hang together.' },
-];
-
-function Formats() {
-  return (
-    <section className="mt-24 border-y-2 border-ink bg-white" aria-labelledby="formats-title">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
-        <SectionHeading id="formats-title" eyebrow="Pick your format" title="Small, medium or the whole wall." />
-        <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-          {formats.map((f, i) => {
-            const product = getProductBySlug(f.slug);
-            const from = getStartingPrice(f.type);
-            if (!product) return null;
-            return (
-              <li key={f.type} className={i === 0 ? 'col-span-2 md:col-span-1' : ''}>
-                <Link to={shopUrl({ types: [f.type] })} className="group block">
-                  <div className="overflow-hidden rounded-[var(--radius-card)] border-2 border-ink">
-                    <ProductImage product={product} className={`w-full ${i === 0 ? 'aspect-[2/1] md:aspect-square' : 'aspect-square'}`} />
-                  </div>
-                  <p className="mt-3 text-xs font-bold tracking-wide text-ink-soft uppercase">{product.category}</p>
-                  <h3 className="text-xl font-extrabold group-hover:underline">{productTypeLabels[f.type].plural}</h3>
-                  <p className="text-sm text-ink-soft">{f.pitch}</p>
-                  {from && <p className="mt-1 text-sm font-bold">from {formatPrice(from)}</p>}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-function Bundles() {
-  // Two sticker bundles + two poster bundles, so both lines get equal space.
-  const pick = (category: Category) =>
-    sortProducts(
-      products.filter((p) => p.category === category && ['sheet', 'pack', 'poster-set'].includes(p.productType) && isPurchasable(p) && p.featured),
-      'featured',
-    ).slice(0, 2);
-  const bundles = [...pick('stickers'), ...pick('posters')];
-  return (
-    <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-6" aria-labelledby="bundles-title">
-      <SectionHeading
-        id="bundles-title"
-        eyebrow="Packs, sheets & wall packs"
-        title="More designs, one price."
-        action={
-          <Link to={shopUrl({ types: ['sheet', 'pack', 'poster-set'] })} className="btn-ghost">
-            See all bundles <LuArrowRight aria-hidden />
-          </Link>
-        }
-      />
-      <ProductGrid products={bundles} />
-      <p className="mt-6 text-sm text-ink-soft">
-        Coming later: <Link to="/product/photo-collage" className="font-bold underline">personalised photo collages</Link> — tell us if you’d want them.
-      </p>
-    </section>
-  );
-}
-
-function Story() {
-  const steps = [
-    { title: 'We draw it', body: 'Every design is original — drawn by us, not borrowed from brands, shows or games.' },
-    { title: 'We print small', body: 'Small batches with a local printer, so we only make what people actually want.' },
-    { title: 'You stick it or hang it', body: 'We’re starting on our own campus, with pickup or delivery arrangements we’ll confirm before launch.' },
-  ];
-  return (
-    <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-6" aria-labelledby="story-title">
-      <div className="panel-glow grid gap-10 rounded-[var(--radius-card)] p-6 md:grid-cols-[1fr_1.2fr] md:p-12">
-        <div>
-          <p className="eyebrow mb-3">The idea</p>
-          <h2 id="story-title" className="text-4xl leading-[1] font-extrabold md:text-5xl">
-            A small brand, made by students, for students.
-          </h2>
-          <p className="mt-5 max-w-md text-lg">
-            We’re building an affordable collection of original stickers and posters for people who like their stuff — and their walls — to look like theirs.
-            We’re just getting started; this site is our first draft.
-          </p>
-          <Link to="/about" className="btn-primary mt-6">
-            Read our story
-          </Link>
-        </div>
-        <ol className="grid gap-4 self-end">
-          {steps.map((s, i) => (
-            <li key={s.title} className="flex gap-4 rounded-2xl border-2 border-ink bg-paper p-5">
-              <span className="font-display text-3xl font-extrabold">{String(i + 1).padStart(2, '0')}</span>
-              <div>
-                <h3 className="text-xl font-extrabold">{s.title}</h3>
-                <p className="mt-1 text-ink-soft">{s.body}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
 export function HomePage() {
   usePageMeta(null);
   return (
@@ -269,9 +164,6 @@ export function HomePage() {
       <ShopByVibe />
       <FeaturedRow category="stickers" eyebrow="Featured stickers" title="Start small. Collect them all." linkLabel="All stickers" />
       <FeaturedRow category="posters" eyebrow="Featured posters" title="Walls deserve personality too." linkLabel="All posters" />
-      <Formats />
-      <Bundles />
-      <Story />
     </>
   );
 }
