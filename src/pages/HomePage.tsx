@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LuArrowLeft, LuArrowRight, LuGift, LuHeart, LuImagePlus, LuMail, LuStamp } from 'react-icons/lu';
+import { LuArrowLeft, LuArrowRight, LuGift, LuHeart, LuImagePlus, LuMail, LuPackage, LuStamp } from 'react-icons/lu';
 import { products } from '../data/products';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from '../router/router';
