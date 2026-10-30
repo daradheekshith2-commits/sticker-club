@@ -259,7 +259,7 @@ app.get('/api/products/:slug',wrap(async(req,res)=>{
  res.json(product);
 }));
 app.get('/api/admin/stats',requireAuth,admin,wrap(async(_req,res)=>{
- const [customers,products,orders,pending,rev]=await Promise.all([db.user.count({where:{role:'CUSTOMER'}}),db.product.count(),db.order.count(),db.order.count({where:{status:'PENDING'}}),db.order.aggregate({_sum:{total:true},where:{status:{not:'CANCELLED'}}})]);
+ const [customers,products,orders,pending,rev]=await Promise.all([db.user.count({where:{role:'CUSTOMER'}}),db.product.count(),db.order.count(),db.order.count({where:{status:'PENDING'}}),db.order.aggregate({_sum:{total:true},where:{status:{not:'CANCELLED'},paymentStatus:'PAID'}})]);
  res.json({customers,products,orders,pendingOrders:pending,totalRevenue:rev._sum.total?.toString()??'0'});
 }));
 app.get('/api/admin/customers',requireAuth,admin,wrap(async(_req,res)=>{res.json(await db.user.findMany({where:{role:'CUSTOMER'},select:{id:true,name:true,email:true,phone:true,createdAt:true,_count:{select:{orders:true}}}}));}));
