@@ -4,6 +4,7 @@ import {
   LuTrash2, LuType, LuUndo2, LuUpload, LuX,
 } from 'react-icons/lu';
 import type { PickedImage } from '../../types/image';
+import { cropExportDimensions } from '../../utils/cropGeometry';
 
 const CANVAS_SIZE = 720;
 const EXPORT_SIZE = 1200;
@@ -17,7 +18,7 @@ const BUILT_IN_FONTS = [
 ];
 const SUGGESTIONS = ['CHAI FIRST', 'GOOD DAYS ONLY', 'STAY WEIRD', 'DREAM BIG', 'MADE WITH LOVE', 'KEEP GOING', 'ONE OF ONE'];
 
-type CropRatio = 'free' | 'square' | 'portrait' | 'landscape';
+type CropRatio = 'free' | 'square' | 'portrait' | 'landscape' | 'custom';
 type TextLayer = {
   id: string;
   text: string;
@@ -39,6 +40,7 @@ type EditorState = {
   panX: number;
   panY: number;
   ratio: CropRatio;
+  customCrop: CropRect;
   layers: TextLayer[];
 };
 type CropRect = { x: number; y: number; width: number; height: number };
@@ -53,12 +55,14 @@ const makeInitialEditor = (): EditorState => ({
   panX: 0,
   panY: 0,
   ratio: 'free',
+  customCrop: { x: 90, y: 90, width: 540, height: 540 },
   layers: [],
 });
 
-function cropRect(ratio: CropRatio, image: HTMLImageElement, rotation: number): CropRect {
+function cropRect(ratio: CropRatio, image: HTMLImageElement, rotation: number, custom?: CropRect): CropRect {
+  if (ratio === 'custom') return custom ?? { x: 90, y: 90, width: 540, height: 540 };
   if (ratio === 'portrait') return { x: 72, y: 0, width: 576, height: 720 };
-  if (ratio === 'landscape') return { x: 0, y: 72, width: 720, height: 576 };
+  if (ratio === 'landscape') return { x: 0, y: 157.5, width: 720, height: 405 };
   if (ratio === 'square') return { x: 0, y: 0, width: 720, height: 720 };
 
   const rotated = Math.abs(rotation % 180) === 90;
@@ -115,7 +119,7 @@ function drawComposition(
   ctx.save();
   ctx.scale(outputScale, outputScale);
 
-  const crop = cropRect(state.ratio, image, state.rotation);
+  const crop = cropRect(state.ratio, image, state.rotation, state.customCrop);
   ctx.save();
   ctx.beginPath();
   ctx.rect(crop.x, crop.y, crop.width, crop.height);
@@ -196,7 +200,7 @@ export function CustomStickerEditor({
   onClose,
 }: {
   image: Extract<PickedImage, { source: 'upload' }>;
-  onApply: (blob: Blob) => void;
+  onApply: (blob: Blob, width: number, height: number) => void;
   onClose: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -217,6 +221,9 @@ export function CustomStickerEditor({
   const [imageError, setImageError] = useState('');
   const [busy, setBusy] = useState(false);
   const [applyError, setApplyError] = useState('');
+  const [cropEditing, setCropEditing] = useState(false);
+  const cropBeforeRef = useRef<EditorState | null>(null);
+  const cropDragRef = useRef<{ x: number; y: number; rect: CropRect; handle: string } | null>(null);
 
   const selectedLayer = editor.layers.find((layer) => layer.id === selectedLayerId) ?? null;
   const hasUndo = historyIndex > 0;
@@ -398,7 +405,7 @@ export function CustomStickerEditor({
     const source = imageRef.current;
     const ctx = canvasRef.current?.getContext('2d');
     if (!source || !ctx) return;
-    const crop = cropRect(editorRef.current.ratio, source, editorRef.current.rotation);
+    const crop = cropRect(editorRef.current.ratio, source, editorRef.current.rotation, editorRef.current.customCrop);
     const layer = findTextLayerAt(ctx, editorRef.current.layers, crop, point.x, point.y);
     if (layer) {
       setSelectedLayerId(layer.id);
@@ -430,7 +437,7 @@ export function CustomStickerEditor({
         panY: Math.max(-420, Math.min(420, drag.panY + dy)),
       });
     } else {
-      const crop = cropRect(editorRef.current.ratio, source, editorRef.current.rotation);
+      const crop = cropRect(editorRef.current.ratio, source, editorRef.current.rotation, editorRef.current.customCrop);
       updateLive({
         ...editorRef.current,
         layers: editorRef.current.layers.map((layer) => layer.id === drag.layerId
@@ -449,6 +456,38 @@ export function CustomStickerEditor({
     commitCurrent();
   }
 
+  function beginCustomCrop() { cropBeforeRef.current = editorRef.current; commit({...editorRef.current,ratio:'custom'}); setCropEditing(true); }
+  function getCropPoint(e: ReactPointerEvent<HTMLDivElement>) { const r=e.currentTarget.getBoundingClientRect(); return {x:(e.clientX-r.left)*720/r.width,y:(e.clientY-r.top)*720/r.height}; }
+  function cropPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
+    if(e.button!==0)return;
+    e.preventDefault();
+    const p=getCropPoint(e),r=editorRef.current.customCrop,t=24;
+    const edgeX=Math.abs(p.x-r.x)<t?'w':Math.abs(p.x-r.x-r.width)<t?'e':'';
+    const edgeY=Math.abs(p.y-r.y)<t?'n':Math.abs(p.y-r.y-r.height)<t?'s':'';
+    const handle=edgeY+edgeX||(p.x>=r.x&&p.x<=r.x+r.width&&p.y>=r.y&&p.y<=r.y+r.height?'move':'draw');
+    cropDragRef.current={x:p.x,y:p.y,rect:r,handle};
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function cropPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
+    const d=cropDragRef.current;if(!d)return;const p=getCropPoint(e),dx=p.x-d.x,dy=p.y-d.y;
+    const min=36,clamp=(n:number,a:number,b:number)=>Math.min(b,Math.max(a,n));
+    let {x,y,width,height}=d.rect;
+    if(d.handle==='move'){x=clamp(x+dx,0,720-width);y=clamp(y+dy,0,720-height);}
+    else if(d.handle==='draw'){x=clamp(Math.min(p.x,d.x),0,720-min);y=clamp(Math.min(p.y,d.y),0,720-min);width=clamp(Math.abs(dx),min,720-x);height=clamp(Math.abs(dy),min,720-y);}
+    else {
+      if(d.handle.includes('w')){x=clamp(x+dx,0,x+width-min);width=d.rect.x+d.rect.width-x;}
+      if(d.handle.includes('e'))width=clamp(width+dx,min,720-x);
+      if(d.handle.includes('n')){y=clamp(y+dy,0,y+height-min);height=d.rect.y+d.rect.height-y;}
+      if(d.handle.includes('s'))height=clamp(height+dy,min,720-y);
+    }
+    updateLive({...editorRef.current,customCrop:{x,y,width,height}});
+  }
+  function cropPointerUp(e: ReactPointerEvent<HTMLDivElement>) {
+    if(!cropDragRef.current)return;cropDragRef.current=null;
+    if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
+    commitCurrent();
+  }
+
   async function applyDesign() {
     const source = imageRef.current;
     if (!source || busy) return;
@@ -456,16 +495,36 @@ export function CustomStickerEditor({
     setApplyError('');
     try {
       await document.fonts.ready;
+      const selectedCrop = cropRect(editorRef.current.ratio, source, editorRef.current.rotation, editorRef.current.customCrop);
+      if (selectedCrop.width <= 0 || selectedCrop.height <= 0) throw new Error('Select a valid crop area.');
+      // Compose at high resolution, then extract ONLY the chosen crop bounds.
+      // Avoid the old 1200×1200 transparent padding on portrait and landscape crops.
+      const composition = document.createElement('canvas');
+      composition.width = EXPORT_SIZE;
+      composition.height = EXPORT_SIZE;
+      const fullContext = composition.getContext('2d');
+      if (!fullContext) throw new Error('Canvas is unavailable in this browser.');
+      const scale = EXPORT_SIZE / CANVAS_SIZE;
+      drawComposition(fullContext, source, editorRef.current, null, scale);
+
       const output = document.createElement('canvas');
-      output.width = EXPORT_SIZE;
-      output.height = EXPORT_SIZE;
+      const dimensions = cropExportDimensions(selectedCrop, EXPORT_SIZE);
+      output.width = dimensions.width;
+      output.height = dimensions.height;
       const context = output.getContext('2d');
-      if (!context) throw new Error('Canvas is unavailable in this browser.');
-      drawComposition(context, source, editorRef.current, null, EXPORT_SIZE / CANVAS_SIZE);
+      if (!context) throw new Error('Canvas export is unavailable in this browser.');
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(
+        composition,
+        selectedCrop.x * scale, selectedCrop.y * scale,
+        selectedCrop.width * scale, selectedCrop.height * scale,
+        0, 0, output.width, output.height,
+      );
       const blob = await new Promise<Blob>((resolve, reject) => {
         output.toBlob((result) => result ? resolve(result) : reject(new Error('The edited image could not be exported.')), 'image/png');
       });
-      onApply(blob);
+      onApply(blob, output.width, output.height);
     } catch (error) {
       setApplyError(error instanceof Error ? error.message : 'Could not apply these edits. Please try again.');
     } finally {
@@ -473,7 +532,7 @@ export function CustomStickerEditor({
     }
   }
 
-  const crop = imageRef.current ? cropRect(editor.ratio, imageRef.current, editor.rotation) : { x: 0, y: 0, width: 720, height: 720 };
+  const crop = imageRef.current ? cropRect(editor.ratio, imageRef.current, editor.rotation, editor.customCrop) : { x: 0, y: 0, width: 720, height: 720 };
   const cropStyle = {
     left: (crop.x / CANVAS_SIZE) * 100 + '%',
     top: (crop.y / CANVAS_SIZE) * 100 + '%',
@@ -527,8 +586,20 @@ export function CustomStickerEditor({
                   onPointerCancel={finishDrag}
                 />
                 <div className="pointer-events-none absolute border-2 border-dashed border-white/90 shadow-[0_0_0_999px_rgba(0,0,0,0.10)]" style={cropStyle} />
+                {cropEditing && <div className="absolute inset-0 cursor-crosshair" role="application" aria-label="Drag to create, move or resize crop selection" style={{touchAction:'none'}} onPointerDown={cropPointerDown} onPointerMove={cropPointerMove} onPointerUp={cropPointerUp} onPointerCancel={cropPointerUp}>
+                  <div className="pointer-events-none absolute border-2 border-[#A8F0DC]" style={cropStyle}>
+                    {['nw','n','ne','e','se','s','sw','w'].map(h => <span key={h} className="absolute size-3 rounded-sm border border-[#03110f] bg-[#A8F0DC]" style={{left:h.includes('w')?'0%':h.includes('e')?'100%':'50%',top:h.includes('n')?'0%':h.includes('s')?'100%':'50%',transform:'translate(-50%,-50%)'}} />)}
+                  </div>
+                </div>}
               </div>
               <p className="mt-2 text-center text-xs text-ink-soft">Drag the photo to reposition it. Select and drag any text to move that layer.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {!cropEditing ? <button type="button" className="btn-accent" onClick={beginCustomCrop}>Custom Crop — Select Your Own Area</button> : <>
+                  <button type="button" className="btn-accent" onClick={() => {cropBeforeRef.current=null;setCropEditing(false);}}>Apply Crop</button>
+                  <button type="button" className="btn-ghost" onClick={() => {if(cropBeforeRef.current)commit(cropBeforeRef.current);cropBeforeRef.current=null;setCropEditing(false);}}>Cancel</button>
+                  <button type="button" className="btn-ghost" onClick={() => commit({...editorRef.current,customCrop:{x:90,y:90,width:540,height:540}})}>Reset crop</button>
+                </>}
+              </div>
 
               <div className="mt-4 rounded-xl bg-white p-3">
                 <p className="text-sm font-extrabold">Crop shape</p>
@@ -537,7 +608,7 @@ export function CustomStickerEditor({
                     { id: 'free' as CropRatio, label: 'Free' },
                     { id: 'square' as CropRatio, label: '1:1' },
                     { id: 'portrait' as CropRatio, label: '4:5' },
-                    { id: 'landscape' as CropRatio, label: '5:4' },
+                    { id: 'landscape' as CropRatio, label: '16:9' },
                   ].map((option) => (
                     <button key={option.id} type="button" onClick={() => commit({ ...editorRef.current, ratio: option.id })} aria-pressed={editor.ratio === option.id} className={editor.ratio === option.id ? 'rounded-lg bg-ink px-2 py-2 text-xs font-bold text-paper' : 'rounded-lg bg-paper px-2 py-2 text-xs font-bold hover:bg-paper-deep'}>
                       {option.label}

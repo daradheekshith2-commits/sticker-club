@@ -2,7 +2,7 @@
  * HOMEPAGE "SHOP BY VIBE"
  *
  * Five cards: one large card on the left and four smaller ones (2×2 on desktop).
- * Anime, Movies, Life Quotes and Marvel use layered sticker compositions built
+ * Anime, Movies, Cars & Bikes and Marvel use layered sticker compositions built
  * from the catalogue's own original artwork. The Cute & Aesthetic card keeps
  * its original markup exactly (see CuteCard).
  *
@@ -106,16 +106,13 @@ function MoviesArt() {
   );
 }
 
-function QuotesArt() {
+function AutomotiveArt() {
   return (
     <>
-      <Piece slug="still-becoming" className="top-[2%] left-0 w-[58cqmin] -rotate-[7deg]" float={{ dur: 6.2, y: -5 }} />
-      <Piece slug="kind-over-cool" className="right-0 bottom-0 w-[52cqmin] rotate-[8deg]" float={{ dur: 5, delay: -2, r: -2 }} />
-      <svg viewBox="0 0 40 40" className="twinkle absolute top-[2%] right-[6%] w-[22cqmin]" style={{ animationDelay: '0.7s' }} aria-hidden>
-        <text x="20" y="38" textAnchor="middle" fontSize="44" fontWeight={800} fill="#FFFFFF" fontFamily="var(--font-display)">
-          ”
-        </text>
-      </svg>
+      <Piece slug="redline-coupe" className="top-[0%] left-[0%] w-[60cqmin] -rotate-[9deg]" float={{ dur: 6, y: -5 }} />
+      <Piece slug="lid-on" className="right-[0%] bottom-[2%] w-[44cqmin] rotate-[11deg]" float={{ dur: 5.2, delay: -1.2, r: -2 }} />
+      <Piece slug="apex-flag" className="right-[1%] top-[0%] w-[29cqmin] rotate-[8deg]" />
+      <Marks className="bottom-[0%] left-[8%] w-[9cqmin]" />
     </>
   );
 }
@@ -132,7 +129,7 @@ function MarvelArt() {
   );
 }
 
-const smallArt: Partial<Record<CollectionId, () => ReactNode>> = { movies: MoviesArt, quotes: QuotesArt, marvel: MarvelArt };
+const smallArt: Partial<Record<CollectionId, () => ReactNode>> = { movies: MoviesArt, quotes: AutomotiveArt, marvel: MarvelArt };
 
 // ---------------------------------------------------------------------------
 // Cards
