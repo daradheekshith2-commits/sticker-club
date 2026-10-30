@@ -46,7 +46,7 @@ test('end-to-end local API: registration, ownership, stock and unpaid checkout',
   assert.equal(other.status,401);
   const address=await api('/api/me/addresses',{method:'POST',body:JSON.stringify({recipient:'Test Buyer',line1:'Test Lane',city:'Hyderabad',state:'Telangana',postalCode:'500001',isDefault:true})},token);
   assert.equal(address.status,201,JSON.stringify(address.body));
-  const products=await db.product.findMany({where:{active:true},take:1,orderBy:{id:'asc'}});
+  const products=await db.product.findMany({where:{active:true,variants:{none:{}}},take:1,orderBy:{id:'asc'}});
   assert.ok(products.length,'Seed must create at least one active product.');
   const product=products[0];
   await db.inventory.upsert({where:{productId:product.id},create:{productId:product.id,quantity:2},update:{quantity:2}});
@@ -61,9 +61,25 @@ test('end-to-end local API: registration, ownership, stock and unpaid checkout',
   assert.equal(quantity?.quantity,1,'An order must decrement inventory atomically.');
   const second=await api('/api/orders',{method:'POST',body:JSON.stringify({addressId:address.body.id})},token);
   assert.equal(second.status,400,'An empty cart must not create a duplicate order.');
+  const withVariant=await db.product.findFirst({
+   where:{active:true,variants:{some:{}}},
+   include:{variants:true}
+  });
+  if(withVariant){
+   const option=withVariant.variants[0];
+   await db.inventory.upsert({where:{productId:withVariant.id},create:{productId:withVariant.id,quantity:3},update:{quantity:3}});
+   const missingVariant=await api('/api/cart/items',{method:'POST',body:JSON.stringify({productId:withVariant.id,quantity:1})},token);
+   assert.equal(missingVariant.status,400,'Variant product must require a variant selection.');
+   const optionAdd=await api('/api/cart/items',{method:'POST',body:JSON.stringify({productId:withVariant.id,variantId:option.id,quantity:2})},token);
+   assert.equal(optionAdd.status,201,JSON.stringify(optionAdd.body));
+   const variantOrder=await api('/api/orders',{method:'POST',body:JSON.stringify({addressId:address.body.id})},token);
+   assert.equal(variantOrder.status,201,JSON.stringify(variantOrder.body));
+   assert.equal(Number(variantOrder.body.total),Number(option.price)*2);
+   assert.equal(variantOrder.body.items[0].variantId,option.id);
+  }
   const customerOrders=await api('/api/me/orders',{},token);
   assert.equal(customerOrders.status,200);
-  assert.equal(customerOrders.body.length,1);
+  assert.equal(customerOrders.body.length,withVariant?2:1);
   const ownedOrder=await api('/api/me/orders/'+order.body.id,{},token);
   assert.equal(ownedOrder.status,200);
   const another=await api('/api/auth/register',{method:'POST',body:JSON.stringify({
