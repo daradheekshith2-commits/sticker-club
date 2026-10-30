@@ -1,13 +1,11 @@
 import { useState } from 'react';
-import { LuArrowLeft, LuArrowRight, LuHeart, LuImagePlus, LuMail, LuPackage, LuStamp } from 'react-icons/lu';
+import { LuArrowLeft, LuArrowRight, LuHeart, LuMail, LuPackage, LuStamp } from 'react-icons/lu';
 import { products } from '../data/products';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from '../router/router';
 import type { Category } from '../types/product';
-import { getProductBySlug, isPurchasable, shopUrl, sortProducts } from '../utils/catalogue';
+import { isPurchasable, shopUrl, sortProducts } from '../utils/catalogue';
 import { formatPrice } from '../utils/format';
-import { PosterSvg } from '../components/art/ProductArt';
-import { StickerSvg } from '../components/art/Sticker';
 import { ProductGrid } from '../components/product/ProductCard';
 import { SectionHeading } from '../components/ui/SectionHeading';
 import { ShopByVibe } from '../components/vibes/ShopByVibe';
