@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import {rateLimit} from 'express-rate-limit';
-import {PrismaClient} from '@prisma/client';
+import {Prisma, PrismaClient} from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {createHash,randomBytes} from 'node:crypto';
@@ -145,8 +145,15 @@ app.post('/api/cart/items',requireAuth,wrap(async(req,res)=>{
  if(!product){res.status(404).json({error:'Product unavailable'});return;}
  if(!product.inventory){res.status(409).json({error:'Stock has not been configured for this product'});return;}
  if(product.inventory.quantity<quantity){res.status(409).json({error:'Not enough stock',available:product.inventory.quantity});return;}
- const cart=await db.cart.upsert({where:{userId:req.session!.id},create:{userId:req.session!.id},update:{}});
- const item=await db.cartItem.upsert({where:{cartId_productId:{cartId:cart.id,productId}},create:{cartId:cart.id,productId,quantity},update:{quantity:{increment:quantity}}});
+ const item=await db.$transaction(async(tx)=>{
+  const cart=await tx.cart.upsert({where:{userId:req.session!.id},create:{userId:req.session!.id},update:{}});
+  const previous=await tx.cartItem.findUnique({where:{cartId_productId:{cartId:cart.id,productId}}});
+  const next=(previous?.quantity??0)+quantity;
+  if(next>99)throw Object.assign(new Error('Maximum 99 of one product per cart'),{status:400});
+  const stock=await tx.inventory.findUnique({where:{productId}});
+  if(!stock||stock.quantity<next)throw Object.assign(new Error('Not enough stock for total cart quantity'),{status:409});
+  return tx.cartItem.upsert({where:{cartId_productId:{cartId:cart.id,productId}},create:{cartId:cart.id,productId,quantity},update:{quantity:next}});
+ },{isolationLevel:'Serializable'});
  res.status(201).json(item);
 }));
 app.patch('/api/cart/items/:id',requireAuth,wrap(async(req,res)=>{
@@ -189,13 +196,12 @@ app.post('/api/orders',requireAuth,wrap(async(req,res)=>{
   if(!address)throw Object.assign(new Error('Shipping address not found'),{status:404});
   const cart=await tx.cart.findUnique({where:{userId},include:{items:{include:{product:{include:{inventory:true}}}}}});
   if(!cart||cart.items.length===0)throw Object.assign(new Error('Your cart is empty'),{status:400});
-  let total=0;
+  let total=new Prisma.Decimal(0);
   const lines=cart.items.map(item=>{
    if(!item.product.active)throw Object.assign(new Error(item.product.name+' is unavailable'),{status:409});
    if(!item.product.inventory)throw Object.assign(new Error('Inventory not configured for '+item.product.name),{status:409});
-   const price=Number(item.product.price);
-   total+=price*item.quantity;
-   return {productId:item.productId,nameSnapshot:item.product.name,unitPrice:price.toFixed(2),quantity:item.quantity,inventory:item.product.inventory};
+   total=total.add(item.product.price.mul(item.quantity));
+   return {productId:item.productId,nameSnapshot:item.product.name,unitPrice:item.product.price.toFixed(2),quantity:item.quantity,inventory:item.product.inventory};
   });
   for(const line of lines){
    if(line.inventory){
