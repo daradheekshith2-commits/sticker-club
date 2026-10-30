@@ -1,7 +1,7 @@
 import {createContext,useCallback,useContext,useEffect,useMemo,useState,type ReactNode} from 'react';
 export type Account={id:string;name:string;email:string;role:'CUSTOMER'|'ADMIN';phone?:string|null};
 // Never silently point a deployed storefront at the visitor's own localhost.
-const API=(import.meta.env.VITE_API_URL as string|undefined)?.replace(/\\/$/,'') || (import.meta.env.DEV ? 'http://localhost:5000' : '');
+const API=(import.meta.env.VITE_API_URL as string|undefined)?.replace(/[/]$/, '') || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 type AuthValue={user:Account|null;ready:boolean;login:(email:string,password:string)=>Promise<Account>;register:(name:string,email:string,password:string)=>Promise<Account>;logout:()=>Promise<void>;request:<T>(path:string,options?:RequestInit)=>Promise<T>;refresh:()=>Promise<void>};
 const Context=createContext<AuthValue|null>(null);
 type SessionPayload={user:Account;accessToken:string};
