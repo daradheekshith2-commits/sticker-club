@@ -12,6 +12,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { LuArrowLeft, LuCheck } from 'react-icons/lu';
 import { brand, hasAnyContact, whatsappLink } from '../config/brand';
 import { useCart } from '../context/CartContext';
+import { LiveOrderCheckout } from '../components/checkout/LiveOrderCheckout';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from '../router/router';
 import { formatPrice, pluralise } from '../utils/format';
@@ -139,6 +140,7 @@ export function CheckoutPage() {
         </Notice>
       </div>
 
+      <div className="mt-8 max-w-3xl"><LiveOrderCheckout /></div>
       <div className="mt-10 grid gap-10 lg:grid-cols-[1.3fr_1fr]">
         <form noValidate onSubmit={handleSubmit} className="space-y-8" aria-label="Checkout preview form">
           <fieldset className="space-y-4">
