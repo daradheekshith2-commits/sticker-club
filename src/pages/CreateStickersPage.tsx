@@ -206,15 +206,15 @@ export function CreateStickersPage() {
                   <CustomStickerEditor
                     image={image}
                     onClose={() => setEditing(false)}
-                    onApply={(blob) => {
+                    onApply={(blob, width, height) => {
                       const editedUrl = objectUrls.create(blob);
                       const baseName = image.fileName.replace(/\.[^.]+$/, '');
                       chooseImage({
                         source: 'upload',
                         objectUrl: editedUrl,
                         fileName: 'edited-' + baseName + '.png',
-                        width: 1200,
-                        height: 1200,
+                        width,
+                        height,
                       });
                     }}
                   />
