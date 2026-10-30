@@ -3,6 +3,7 @@ import { LuChevronDown, LuMenu, LuSearch, LuShoppingBag, LuX } from 'react-icons
 import { brand } from '../../config/brand';
 import { megaMenus, plainLinks, vibeLinks, type MegaMenu } from '../../config/navigation';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { Link, useLocation, useNavigate } from '../../router/router';
 import { getProductBySlug, shopUrl } from '../../utils/catalogue';
 import { formatPrice } from '../../utils/format';
@@ -112,6 +113,7 @@ function MegaPanel({ menu }: { menu: MegaMenu }) {
 
 export function SiteHeader() {
   const { itemCount, openCart } = useCart();
+  const { user } = useAuth();
   const { pathname, search } = useLocation();
   const params = new URLSearchParams(search);
   const [menuOpen, setMenuOpen] = useState(false); // mobile drawer
@@ -214,6 +216,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1">
+          <Link to={user?.role === 'ADMIN' ? '/admin' : user ? '/account' : '/login'} className="rounded-full px-3 py-2 text-sm font-bold hover:bg-paper-deep">{user ? 'Account' : 'Log in'}</Link>
           <button
             type="button"
             className="grid size-10 place-items-center rounded-full hover:bg-paper-deep"
