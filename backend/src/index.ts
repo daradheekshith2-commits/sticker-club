@@ -9,6 +9,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {createHash,randomBytes} from 'node:crypto';
 import {z} from 'zod';
+import swaggerUi from 'swagger-ui-express';
+import {openapi} from './openapi.js';
 const config=z.object({DATABASE_URL:z.string().min(1),JWT_SECRET:z.string().min(32),FRONTEND_ORIGIN:z.string().url().default('http://localhost:5173'),PORT:z.coerce.number().default(5000),NODE_ENV:z.string().default('development')}).parse(process.env);
 const db=new PrismaClient();
 const app=express();app.disable('x-powered-by');app.use(helmet());app.use(express.json({limit:'1mb'}));app.use(cookieParser());app.use(cors({origin:config.FRONTEND_ORIGIN,credentials:true}));
@@ -39,6 +41,7 @@ const sameOrigin=(req:Request,res:Response,next:NextFunction)=>{
 const wrap=(fn:(req:Authed,res:Response)=>Promise<void>)=>(req:Authed,res:Response,next:NextFunction)=>Promise.resolve(fn(req,res)).catch(next);
 const credentials=z.object({email:z.email().max(254).transform(s=>s.trim().toLowerCase()),password:z.string().min(12).max(128)});
 app.get('/api/health',(_req,res)=>res.json({ok:true}));
+app.use('/api/docs',swaggerUi.serve,swaggerUi.setup(openapi));
 app.post('/api/auth/register',authLimit,wrap(async(req,res)=>{
  const data=credentials.extend({name:z.string().trim().min(1).max(100)}).parse(req.body);
  if(await db.user.findUnique({where:{email:data.email}})){res.status(409).json({error:'Email already registered'});return;}
