@@ -12,7 +12,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { LuArrowLeft, LuCheck } from 'react-icons/lu';
 import { brand, hasAnyContact, whatsappLink } from '../config/brand';
 import { useCart } from '../context/CartContext';
-import { LiveOrderCheckout } from '../components/checkout/LiveOrderCheckout';
+import { LiveOrderCheckout, type OrderReceipt } from '../components/checkout/LiveOrderCheckout';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from '../router/router';
 import { formatPrice, pluralise } from '../utils/format';
@@ -50,6 +50,7 @@ export function CheckoutPage() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Errors>({});
   const [previewDone, setPreviewDone] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<OrderReceipt | null>(null);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -76,6 +77,22 @@ export function CheckoutPage() {
     'aria-invalid': errors[key] ? true : undefined,
     'aria-describedby': errors[key] ? `checkout-${key}-error` : undefined,
   });
+
+  if (createdOrder) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+        <div className="rounded-[var(--radius-card)] border-2 border-ink bg-white p-8 text-center" role="status">
+          <LuCheck aria-hidden className="mx-auto size-12" />
+          <h1 className="mt-4 text-4xl font-extrabold">Order saved in your account</h1>
+          <p className="mt-4">Order reference: <strong>{createdOrder.id}</strong></p>
+          <p className="mt-2">Database total: <strong>{formatPrice(Number(createdOrder.total))}</strong></p>
+          <p className="mt-2">Order status: {createdOrder.status} · Payment: {createdOrder.paymentStatus}</p>
+          <p className="mt-4 text-sm font-bold">No payment was collected. We have recorded an unpaid order, not a paid purchase.</p>
+          <Link className="btn-primary mt-5" to="/account">View my orders</Link>
+        </div>
+      </div>
+    );
+  }
 
   if (previewDone) {
     const wa = whatsappLink('Hi! I tried your checkout preview and I’d like to buy some stickers.');
@@ -140,7 +157,7 @@ export function CheckoutPage() {
         </Notice>
       </div>
 
-      <div className="mt-8 max-w-3xl"><LiveOrderCheckout /></div>
+      <div className="mt-8 max-w-3xl"><LiveOrderCheckout onCreated={setCreatedOrder} /></div>
       <div className="mt-10 grid gap-10 lg:grid-cols-[1.3fr_1fr]">
         <form noValidate onSubmit={handleSubmit} className="space-y-8" aria-label="Checkout preview form">
           <fieldset className="space-y-4">
