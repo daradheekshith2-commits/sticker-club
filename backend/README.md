@@ -88,3 +88,14 @@ npm run build
 These commands have **not been executed against a clean database here**. If Prisma reports migration drift or a schema mismatch, stop and investigate before editing applied migrations. Do not use `prisma db push` as a substitute for migration history or reset a database containing real data.
 
 The seed loads `../src/data/products.ts` and `../src/data/collections.ts` through `tsx`. Run seed from a checkout containing both the frontend and backend folders. It seeds only new products, never overwrites an existing product's live price, and does not create fictional inventory. The frontend shop still reads its bundled catalogue rather than the database and is **not** safe for real checkout until that gap is resolved.
+
+## Compiled Node server (non-watch mode)
+
+After `npm install`, `npm run db:generate`, migrations, and environment setup in `backend/`:
+
+```bash
+npm run build
+npm start
+```
+
+This builds `backend/dist/index.js` using TypeScript and runs Node directly. `npm run dev` remains the recommended interactive local development command. Do not deploy to production before HTTPS, logging, database backups, credentials, and security reviews are in place.
