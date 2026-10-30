@@ -17,9 +17,9 @@ const lowestPrice = (category: Category) => Math.min(...orderable(category).map(
 // ---------- Shop categories ----------
 function CategoryDoors() {
   const cards = [
-    { id: 'stickers', eyebrow: 'STICKER ESSENTIALS', title: 'Stickers', description: 'Mini designs, sheets and themed packs for your everyday things.', cta: 'SHOP STICKERS', to: shopUrl({ category: 'stickers' }), category: 'stickers' as const, color: '#FFE16B', image: '/category-art/stickers.webp', alt: 'Layered character sticker collage with playful text stickers and stars' },
-    { id: 'posters', eyebrow: 'WALL ART', title: 'Posters', description: 'Give your room, hostel or workspace a little more personality.', cta: 'SHOP POSTERS', to: shopUrl({ category: 'posters' }), category: 'posters' as const, color: '#A6DFF4', image: '/category-art/posters.webp', alt: 'Three overlapping poster prints featuring superhero and automotive artwork' },
-    { id: 'custom', eyebrow: 'MAKE IT PERSONAL', title: 'Shop Your Own', description: 'Turn your own photo, drawing or idea into a custom sticker.', cta: 'START CREATING', to: '/create-your-stickers', category: null, color: '#A8E8C4', image: '/category-art/custom.webp', alt: 'Custom sticker upload card with cat illustration and plus symbol' },
+    { id: 'stickers', eyebrow: 'STICKER ESSENTIALS', title: 'Stickers', description: 'Mini designs, sheets and themed packs for your everyday things.', cta: 'SHOP STICKERS', to: shopUrl({ category: 'stickers' }), category: 'stickers' as const, color: '#FFE16B', image: import.meta.env.BASE_URL + 'category-art/stickers.webp', alt: 'Layered character sticker collage with playful text stickers and stars' },
+    { id: 'posters', eyebrow: 'WALL ART', title: 'Posters', description: 'Give your room, hostel or workspace a little more personality.', cta: 'SHOP POSTERS', to: shopUrl({ category: 'posters' }), category: 'posters' as const, color: '#A6DFF4', image: import.meta.env.BASE_URL + 'category-art/posters.webp', alt: 'Three overlapping poster prints featuring superhero and automotive artwork' },
+    { id: 'custom', eyebrow: 'MAKE IT PERSONAL', title: 'Shop Your Own', description: 'Turn your own photo, drawing or idea into a custom sticker.', cta: 'START CREATING', to: '/create-your-stickers', category: null, color: '#A8E8C4', image: import.meta.env.BASE_URL + 'category-art/custom.webp', alt: 'Custom sticker upload card with cat illustration and plus symbol' },
   ];
 
   return (
