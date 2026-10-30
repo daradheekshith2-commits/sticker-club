@@ -77,6 +77,23 @@ test('end-to-end local API: registration, ownership, stock and unpaid checkout',
   const relog=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password:'Test-only-passphrase-4567'})});
   assert.equal(relog.status,200);
   assert.equal(relog.body.user.role,'CUSTOMER');
+  const wrongPassword=await api('/api/me/password',{method:'POST',body:JSON.stringify({
+   currentPassword:'definitely-wrong',newPassword:'Another-secure-passphrase-78'
+  })},token);
+  assert.equal(wrongPassword.status,403);
+  const changedPassword=await api('/api/me/password',{method:'POST',body:JSON.stringify({
+   currentPassword:'Test-only-passphrase-4567',newPassword:'Another-secure-passphrase-78'
+  })},token);
+  assert.equal(changedPassword.status,200,JSON.stringify(changedPassword.body));
+  const oldLogin=await api('/api/auth/login',{method:'POST',body:JSON.stringify({
+   email,password:'Test-only-passphrase-4567'
+  })});
+  assert.equal(oldLogin.status,401,'Old password must stop working.');
+  const newLogin=await api('/api/auth/login',{method:'POST',body:JSON.stringify({
+   email,password:'Another-secure-passphrase-78'
+  })});
+  assert.equal(newLogin.status,200,'New password must work.');
+
  }finally{
   proc.kill();
   await db.$disconnect();
