@@ -6,13 +6,13 @@ import type {ProductCartLine} from '../../utils/cart';
 
 type Address={id:string;recipient:string;line1:string;city:string;state:string;postalCode:string;isDefault:boolean};
 type ServerCart={items:Array<{productId:string;quantity:number;product:{name:string;price:string;active:boolean;inventory:{quantity:number}|null}}>} ;
-type Order={id:string;total:string;paymentStatus:string;status:string};
+export type OrderReceipt={id:string;total:string;paymentStatus:string;status:string};
 
 /** Database checkout for unconfigured catalogue items only.
  * Variant prices, uploads and custom bundles are intentionally excluded until
  * the database has matching server-side pricing models.
  */
-export function LiveOrderCheckout(){
+export function LiveOrderCheckout({onCreated}:{onCreated?:(order:OrderReceipt)=>void}={}){
  const {user,request}=useAuth();
  const {lines,clearCart}=useCart();
  const [addresses,setAddresses]=useState<Address[]>([]);
@@ -21,7 +21,7 @@ export function LiveOrderCheckout(){
  const [saving,setSaving]=useState(false);
  const [working,setWorking]=useState(false);
  const [error,setError]=useState('');
- const [order,setOrder]=useState<Order|null>(null);
+ const [order,setOrder]=useState<OrderReceipt|null>(null);
  const [preview,setPreview]=useState<ServerCart|null>(null);
  const standard=lines.filter((l):l is ProductCartLine=>l.type==='product'&&!l.variant);
  const unsupported=lines.filter(l=>l.type!=='product'||Boolean(l.variant));
@@ -56,8 +56,8 @@ export function LiveOrderCheckout(){
   if(!selected||!preview||working)return;
   setWorking(true);setError('');
   try{
-   const placed=await request<Order>('/api/orders',{method:'POST',body:JSON.stringify({addressId:selected})});
-   setOrder(placed);clearCart();setPreview(null);
+   const placed=await request<OrderReceipt>('/api/orders',{method:'POST',body:JSON.stringify({addressId:selected})});
+   setOrder(placed);onCreated?.(placed);clearCart();setPreview(null);
   }catch(e){setError(e instanceof Error?e.message:'Could not create order');setPreview(null);}finally{setWorking(false);}
  }
  if(!user)return <section className="rounded-2xl border border-ink/20 bg-white p-6">
