@@ -4,7 +4,7 @@ import { products } from '../data/products';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from '../router/router';
 import type { Category } from '../types/product';
-import { allSizes, getProductBySlug, isPurchasable, shopUrl, sortProducts } from '../utils/catalogue';
+import { getProductBySlug, isPurchasable, shopUrl, sortProducts } from '../utils/catalogue';
 import { formatPrice } from '../utils/format';
 import { ProductImage } from '../components/art/ProductArt';
 import { ProductGrid } from '../components/product/ProductCard';
