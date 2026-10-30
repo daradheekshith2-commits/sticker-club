@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import {
-  LuAlignCenter, LuAlignLeft, LuAlignRight, LuCheck, LuCopy, LuCrop,
-  LuRedo2, LuRefreshCw, LuRotateCcw, LuRotateCw, LuTrash2, LuType,
-  LuUndo2, LuUpload, LuX,
+  LuCheck, LuCopy, LuCrop, LuRedo2, LuRefreshCw, LuRotateCcw, LuRotateCw,
+  LuTrash2, LuType, LuUndo2, LuUpload, LuX,
 } from 'react-icons/lu';
 import type { PickedImage } from '../../types/image';
 
@@ -57,14 +56,13 @@ const makeInitialEditor = (): EditorState => ({
   layers: [],
 });
 
-function cropRect(ratio: CropRatio, image: HTMLImageElement): CropRect {
+function cropRect(ratio: CropRatio, image: HTMLImageElement, rotation: number): CropRect {
   if (ratio === 'portrait') return { x: 72, y: 0, width: 576, height: 720 };
   if (ratio === 'landscape') return { x: 0, y: 72, width: 720, height: 576 };
   if (ratio === 'square') return { x: 0, y: 0, width: 720, height: 720 };
 
-  const swapped = Math.abs(image.width) > 0 && Math.abs(image.height) > 0;
-  const rotated = Math.abs((window.__stickerEditorRotation ?? 0) % 180) === 90;
-  const imageRatio = swapped ? (rotated ? image.height / image.width : image.width / image.height) : 1;
+  const rotated = Math.abs(rotation % 180) === 90;
+  const imageRatio = rotated ? image.height / image.width : image.width / image.height;
   const safeRatio = Math.max(0.35, Math.min(2.8, imageRatio));
   if (safeRatio >= 1) {
     const height = CANVAS_SIZE / safeRatio;
@@ -117,7 +115,7 @@ function drawComposition(
   ctx.save();
   ctx.scale(outputScale, outputScale);
 
-  const crop = cropRect(state.ratio, image);
+  const crop = cropRect(state.ratio, image, state.rotation);
   ctx.save();
   ctx.beginPath();
   ctx.rect(crop.x, crop.y, crop.width, crop.height);
@@ -253,10 +251,7 @@ export function CustomStickerEditor({
       setImageError('Your browser could not open the image editor.');
       return;
     }
-    const previousRotation = window.__stickerEditorRotation;
-    window.__stickerEditorRotation = editor.rotation;
     drawComposition(ctx, source, editor, selectedLayerId);
-    window.__stickerEditorRotation = previousRotation;
   }, [editor, selectedLayerId, imageReady, fontRevision]);
 
   useEffect(() => () => {
@@ -403,7 +398,7 @@ export function CustomStickerEditor({
     const source = imageRef.current;
     const ctx = canvasRef.current?.getContext('2d');
     if (!source || !ctx) return;
-    const crop = cropRect(editorRef.current.ratio, source);
+    const crop = cropRect(editorRef.current.ratio, source, editorRef.current.rotation);
     const layer = findTextLayerAt(ctx, editorRef.current.layers, crop, point.x, point.y);
     if (layer) {
       setSelectedLayerId(layer.id);
@@ -478,7 +473,7 @@ export function CustomStickerEditor({
     }
   }
 
-  const crop = imageRef.current ? cropRect(editor.ratio, imageRef.current) : { x: 0, y: 0, width: 720, height: 720 };
+  const crop = imageRef.current ? cropRect(editor.ratio, imageRef.current, editor.rotation) : { x: 0, y: 0, width: 720, height: 720 };
   const cropStyle = {
     left: (crop.x / CANVAS_SIZE) * 100 + '%',
     top: (crop.y / CANVAS_SIZE) * 100 + '%',
