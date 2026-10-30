@@ -120,6 +120,7 @@ function CategoryDoors() {
 
                 {card.id === 'posters' && (
                   <div className="relative h-[128px] w-full max-w-[245px]">
+                    <div className="washi-tape absolute -top-2.5 left-1/2 -translate-x-1/2 z-20 h-3.5 w-16 -rotate-1 rounded-xs" />
                     {posterDesigns.map((poster, index) => (
                       <div key={poster.title + index} className="absolute top-0 h-[122px] w-[28%] overflow-hidden rounded-[2px] border-[3px] border-[#F8F6EE] bg-white shadow-[0_6px_8px_rgba(0,0,0,0.25)] transition-transform duration-200 group-hover:-translate-y-1" style={posterPositions[index]}>
                         <PosterSvg poster={poster} className="h-full w-full" />
@@ -226,29 +227,46 @@ function Collect() {
         title="Little things worth discovering."
       />
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {features.map((feature) => (
-          <li key={feature.to} className="min-w-0">
-            <Link
-              to={feature.to}
-              className="group flex h-full min-h-[270px] flex-col rounded-[var(--radius-card)] border border-[#315e53] bg-[#071b18] p-6 transition duration-200 hover:-translate-y-1 hover:border-[#a8f0dc] hover:shadow-[0_14px_30px_rgba(0,0,0,0.22)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="grid size-14 place-items-center rounded-2xl border border-[#f4f0e8]/15" style={{ backgroundColor: feature.accent }}>
-                  <feature.Icon aria-hidden className={`size-7 ${feature.accent === '#D90A1F' ? 'text-[#F4F0E8]' : 'text-[#03110f]'}`} strokeWidth={1.8} />
+        {features.map((feature) => {
+          const isMystery = feature.to === '/product/mystery-pack';
+          const isPassport = feature.to === '/collector-passport';
+          return (
+            <li key={feature.to} className="min-w-0">
+              <Link
+                to={feature.to}
+                className={`group relative flex h-full min-h-[270px] flex-col rounded-[var(--radius-card)] border border-[#315e53] bg-[#071b18] p-6 transition duration-200 hover:-translate-y-1 hover:border-[#a8f0dc] hover:shadow-[0_14px_30px_rgba(0,0,0,0.22)] ${isMystery ? 'holo-shimmer' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="grid size-14 place-items-center rounded-2xl border border-[#f4f0e8]/15 shadow-sm" style={{ backgroundColor: feature.accent }}>
+                    <feature.Icon aria-hidden className={`size-7 ${feature.accent === '#D90A1F' ? 'text-[#F4F0E8]' : 'text-[#03110f]'}`} strokeWidth={1.8} />
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {isMystery && (
+                      <span className="rubber-stamp text-[10px] py-0.5 px-2">5 + 1 ?</span>
+                    )}
+                    {isPassport && (
+                      <span className="rounded border border-dashed border-mint/40 px-2 py-0.5 font-mono text-[9px] text-mint">STAMP CARD</span>
+                    )}
+                    <span className="grid size-9 place-items-center rounded-full border border-[#315e53] text-[#a8f0dc] transition-all group-hover:border-[#a8f0dc] group-hover:bg-[#a8f0dc] group-hover:text-[#03110f]">
+                      <LuArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-0.5" />
+                    </span>
+                  </div>
+                </div>
+                {isMystery && (
+                  <div className="my-3 border-t border-dashed border-ink/20 relative">
+                    <span className="absolute -top-2 right-2 bg-[#071b18] px-1.5 text-[8px] font-mono tracking-widest text-ink-soft">TEAR HERE ▶</span>
+                  </div>
+                )}
+                <p className="mt-4 text-[10px] font-extrabold tracking-[0.16em]" style={{ color: feature.accent }}>{feature.eyebrow}</p>
+                <h3 className="mt-1 font-display text-2xl font-extrabold text-[#F4F0E8]">{feature.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-[#B5C7C1]">{feature.description}</p>
+                <span className="mt-6 inline-flex w-fit items-center gap-2 text-xs font-extrabold tracking-[0.08em] text-[#a8f0dc] transition-colors group-hover:text-[#F4F0E8]">
+                  {feature.cta} <LuArrowRight aria-hidden className="size-4" />
                 </span>
-                <span className="grid size-9 place-items-center rounded-full border border-[#315e53] text-[#a8f0dc] transition-all group-hover:border-[#a8f0dc] group-hover:bg-[#a8f0dc] group-hover:text-[#03110f]">
-                  <LuArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </div>
-              <p className="mt-6 text-[10px] font-extrabold tracking-[0.16em]" style={{ color: feature.accent }}>{feature.eyebrow}</p>
-              <h3 className="mt-2 font-display text-2xl font-extrabold text-[#F4F0E8]">{feature.title}</h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-[#B5C7C1]">{feature.description}</p>
-              <span className="mt-6 inline-flex w-fit items-center gap-2 text-xs font-extrabold tracking-[0.08em] text-[#a8f0dc] transition-colors group-hover:text-[#F4F0E8]">
-                {feature.cta} <LuArrowRight aria-hidden className="size-4" />
-              </span>
-            </Link>
-          </li>
-        ))}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

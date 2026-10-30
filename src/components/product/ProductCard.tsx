@@ -46,7 +46,7 @@ export function ProductCard({ product, headingLevel = 'h3' }: { product: Product
     <article className="group relative flex h-full flex-col">
       <Link
         to={url}
-        className="relative block aspect-square overflow-hidden rounded-[var(--radius-card)] ring-2 ring-transparent transition-[box-shadow,transform] duration-200 group-hover:-translate-y-0.5 group-hover:ring-ink"
+        className="relative block aspect-square overflow-hidden rounded-[var(--radius-card)] border border-mint/15 bg-paper-deep shadow-[0_8px_20px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[0_16px_32px_rgba(0,0,0,0.5),0_0_20px_rgba(255,16,38,0.15)] group-hover:border-mint/40"
         tabIndex={-1}
         aria-hidden
       >

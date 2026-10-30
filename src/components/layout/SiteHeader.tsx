@@ -166,14 +166,14 @@ export function SiteHeader() {
 
   return (
     <header
-      className="sticky top-0 z-40 border-b border-mint/15 bg-paper/92 backdrop-blur"
+      className="sticky top-2 z-40 mx-auto max-w-7xl px-3 transition-all sm:top-3.5 sm:px-6"
       onMouseLeave={hoverClose}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
+      <div className="flex h-16 items-center gap-3 rounded-full border border-mint/20 bg-paper-deep/85 px-4 sm:px-6 shadow-[0_16px_36px_-10px_rgba(0,0,0,0.65),0_0_0_1px_rgba(168,240,220,0.08)] backdrop-blur-xl">
         <button
           ref={menuButton}
           type="button"
-          className="grid size-10 place-items-center rounded-full hover:bg-paper-deep lg:hidden"
+          className="grid size-10 place-items-center rounded-full hover:bg-paper lg:hidden"
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={menuOpen}
           aria-controls="mobile-nav"
@@ -183,6 +183,14 @@ export function SiteHeader() {
         </button>
 
         <Wordmark />
+
+        <div className="hidden xl:flex items-center gap-2 rounded-full border border-mint/20 bg-paper/60 px-2.5 py-1 text-[10px] font-mono tracking-widest text-mint uppercase">
+          <span className="relative flex size-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cinema-red opacity-75" />
+            <span className="relative inline-flex size-1.5 rounded-full bg-cinema-red" />
+          </span>
+          HYD · DROP 01
+        </div>
 
         <nav aria-label="Main" className="ml-6 hidden lg:block">
           <ul className="flex items-center gap-1">
@@ -213,10 +221,10 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-1.5">
           <button
             type="button"
-            className="grid size-10 place-items-center rounded-full hover:bg-paper-deep"
+            className="grid size-10 place-items-center rounded-full hover:bg-paper"
             aria-label={searchOpen ? 'Close search' : 'Search'}
             aria-expanded={searchOpen}
             onClick={() => setSearchOpen((o) => !o)}
@@ -226,12 +234,12 @@ export function SiteHeader() {
           <button
             type="button"
             onClick={openCart}
-            className="relative flex h-10 items-center gap-2 rounded-full bg-ink px-4 text-sm font-bold text-paper"
+            className="group relative flex h-10 items-center gap-2 rounded-full bg-ink px-4 text-sm font-bold text-paper transition-all hover:scale-105 active:scale-95 shadow-md"
             aria-label={`Open cart, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
           >
-            <LuShoppingBag aria-hidden className="size-4" />
+            <LuShoppingBag aria-hidden className="size-4 transition-transform group-hover:-rotate-12" />
             <span className="hidden sm:inline">Cart</span>
-            <span className="grid min-w-5 place-items-center rounded-full bg-lime px-1.5 text-xs leading-5 text-ink tabular-nums">{itemCount}</span>
+            <span className="grid min-w-5 place-items-center rounded-full bg-lime px-1.5 text-xs font-mono font-bold leading-5 text-ink tabular-nums shadow-sm">{itemCount}</span>
           </button>
         </div>
       </div>
@@ -240,7 +248,7 @@ export function SiteHeader() {
       {activeMenu && (
         <div
           id="mega-panel"
-          className="fade-in absolute inset-x-0 top-full hidden border-b-2 border-ink bg-paper shadow-[0_12px_0_rgba(18,18,18,0.06)] lg:block"
+          className="fade-in absolute inset-x-3 sm:inset-x-6 top-[calc(100%+0.5rem)] hidden rounded-2xl border border-mint/20 bg-paper-deep/95 shadow-2xl backdrop-blur-xl lg:block overflow-hidden"
           onMouseEnter={() => hoverOpen(activeMenu.id)}
         >
           <MegaPanel menu={activeMenu} />
@@ -248,7 +256,7 @@ export function SiteHeader() {
       )}
 
       {searchOpen && (
-        <div className="fade-in border-t-2 border-ink/10 bg-paper px-4 py-3 sm:px-6">
+        <div className="fade-in absolute inset-x-3 sm:inset-x-6 top-[calc(100%+0.5rem)] rounded-2xl border border-mint/20 bg-paper-deep/95 px-4 py-3 shadow-2xl backdrop-blur-xl">
           <div className="mx-auto max-w-2xl">
             <SearchForm autoFocus onDone={() => setSearchOpen(false)} />
           </div>
@@ -257,8 +265,8 @@ export function SiteHeader() {
 
       {/* Mobile menu: both categories get equal sections */}
       {menuOpen && (
-        <nav id="mobile-nav" aria-label="Mobile" className="fade-in max-h-[calc(100vh-4rem)] overflow-y-auto border-t-2 border-ink bg-paper lg:hidden">
-          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-5 sm:grid-cols-2">
+        <nav id="mobile-nav" aria-label="Mobile" className="fade-in absolute inset-x-3 top-[calc(100%+0.5rem)] max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border border-mint/20 bg-paper-deep/95 p-4 shadow-2xl backdrop-blur-xl lg:hidden">
+          <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-2">
             {menus.map((m) => (
               <section key={m.id} aria-label={m.label}>
                 <Link to={m.allLink.to} className="block rounded-xl bg-lime px-3 py-2 font-display text-2xl font-extrabold">

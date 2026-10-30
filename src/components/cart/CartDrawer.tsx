@@ -137,24 +137,24 @@ export function CartDrawer() {
         </div>
 
         {lines.length > 0 && (
-          <div className="border-t-2 border-ink bg-white px-5 py-5">
-            <div className="flex items-baseline justify-between">
-              <span className="font-bold">Subtotal</span>
-              <span className="font-display text-2xl font-extrabold tabular-nums">{formatPrice(subtotal)}</span>
+          <div className="receipt-edge border-t-2 border-dashed border-ink/20 bg-paper-deep px-5 pt-5 pb-7 shadow-2xl">
+            <div className="flex items-baseline justify-between border-b border-ink/10 pb-3">
+              <span className="font-mono text-xs tracking-widest text-mint uppercase">ESTIMATED TOTAL</span>
+              <span className="font-display text-2xl font-extrabold tabular-nums text-ink">{formatPrice(subtotal)}</span>
             </div>
             {hasStickers && (
-              <div className="mt-2">
+              <div className="mt-3">
                 <BonusGiftNote compact />
               </div>
             )}
-            <p className="mt-1 text-sm text-ink-soft">
+            <p className="mt-2 text-xs leading-relaxed text-ink-soft">
               Pickup/delivery charges and the final total will be confirmed once fulfilment is set up. This is a prototype — no payment is taken.
             </p>
             <button type="button" className="btn-primary mt-4 w-full" onClick={() => go('/checkout')}>
               Preview checkout <LuArrowRight aria-hidden />
             </button>
-            <button type="button" className="mt-2 w-full py-2 text-sm font-bold underline underline-offset-4" onClick={closeCart}>
-              Continue shopping
+            <button type="button" className="mt-2.5 w-full py-2 text-xs font-mono font-bold tracking-wider uppercase text-ink-soft hover:text-ink transition-colors" onClick={closeCart}>
+              ← Continue shopping
             </button>
           </div>
         )}

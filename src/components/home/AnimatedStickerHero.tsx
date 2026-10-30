@@ -17,11 +17,18 @@ export function AnimatedStickerHero() {
 
       <div className="cinema-hero-grid mx-auto grid max-w-7xl items-center gap-10 px-4 pt-10 pb-12 sm:px-6 lg:min-h-[min(calc(100svh-4rem),820px)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.12fr)] lg:gap-8 lg:py-10">
         <div className="relative max-w-xl">
-          <p className="text-xs font-bold tracking-[0.32em] text-cinema-mint uppercase sm:text-sm">Your everyday, but more you</p>
-          <h1 id="hero-title" className="cinema-hero-title mt-5 font-hero text-[4.4rem] leading-[0.86] tracking-[0.005em] uppercase sm:text-[6.5rem] lg:text-[7.4rem]">
+          <div className="inline-flex items-center gap-2 mb-3 px-3.5 py-1 rounded-full border border-mint/20 bg-paper-deep/80 text-mint text-[11px] font-mono tracking-widest uppercase backdrop-blur-sm shadow-sm">
+            <span className="size-1.5 rounded-full bg-cinema-red" />
+            [ ARCHIVE 2026 // EDITION 01 — HYD STUDIO ]
+          </div>
+          <h1 id="hero-title" className="cinema-hero-title mt-3 font-hero text-[4.4rem] leading-[0.86] tracking-[0.005em] uppercase sm:text-[6.5rem] lg:text-[7.4rem]">
             <span className="block">Stick your</span>
             <span className="relative inline-block text-cinema-red [text-shadow:0_0_28px_rgba(255,16,38,0.45)]">
               Vibe.
+              {/* Overlapping tactile die-cut badge */}
+              <span className="absolute -top-4 -right-16 hidden sm:inline-block rotate-12 rounded-lg bg-mint px-2.5 py-1 text-[11px] font-mono font-black text-paper shadow-2xl border-2 border-paper hover:rotate-6 transition-transform cursor-pointer select-none">
+                ★ DIE-CUT
+              </span>
               {/* hand-drawn swoosh + sparkle */}
               <svg viewBox="0 0 120 40" className="absolute -top-[6%] left-[104%] w-[0.95em]" aria-hidden>
                 <path d="M4 30 C40 8 80 4 116 6 M60 30 C80 22 100 18 116 18" stroke="#FF1026" strokeWidth={4} fill="none" strokeLinecap="round" />
