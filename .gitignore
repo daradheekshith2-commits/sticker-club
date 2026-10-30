@@ -4,3 +4,10 @@ dist-local
 *.local
 .DS_Store
 .vercel
+
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
