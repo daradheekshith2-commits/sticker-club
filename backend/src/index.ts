@@ -136,6 +136,66 @@ app.delete('/api/me/addresses/:id',requireAuth,wrap(async(req,res)=>{
  const result=await db.address.deleteMany({where:{id:String(req.params.id),userId:req.session!.id}});
  if(!result.count){res.status(404).json({error:'Not found'});return;}res.json({ok:true});
 }));
+const cartItemInput=z.object({productId:z.string().min(1),quantity:z.number().int().min(1).max(99)});
+const getCart=async(userId:string)=>db.cart.upsert({where:{userId},create:{userId},update:{},include:{items:{include:{product:{include:{images:true,inventory:true,categories:true}}}}}});
+app.get('/api/cart',requireAuth,wrap(async(req,res)=>{res.json(await getCart(req.session!.id));}));
+app.post('/api/cart/items',requireAuth,wrap(async(req,res)=>{
+ const {productId,quantity}=cartItemInput.parse(req.body);
+ const product=await db.product.findFirst({where:{id:productId,active:true},include:{inventory:true}});
+ if(!product){res.status(404).json({error:'Product unavailable'});return;}
+ if(product.inventory&&product.inventory.quantity<quantity){res.status(409).json({error:'Not enough stock',available:product.inventory.quantity});return;}
+ const cart=await db.cart.upsert({where:{userId:req.session!.id},create:{userId:req.session!.id},update:{}});
+ const item=await db.cartItem.upsert({where:{cartId_productId:{cartId:cart.id,productId}},create:{cartId:cart.id,productId,quantity},update:{quantity:{increment:quantity}}});
+ res.status(201).json(item);
+}));
+app.patch('/api/cart/items/:id',requireAuth,wrap(async(req,res)=>{
+ const {quantity}=z.object({quantity:z.number().int().min(1).max(99)}).parse(req.body);
+ const cart=await db.cart.findUnique({where:{userId:req.session!.id}});
+ if(!cart){res.status(404).json({error:'Cart not found'});return;}
+ const item=await db.cartItem.findFirst({where:{id:String(req.params.id),cartId:cart.id},include:{product:{include:{inventory:true}}}});
+ if(!item){res.status(404).json({error:'Cart item not found'});return;}
+ if(item.product.inventory&&item.product.inventory.quantity<quantity){res.status(409).json({error:'Not enough stock',available:item.product.inventory.quantity});return;}
+ res.json(await db.cartItem.update({where:{id:item.id},data:{quantity}}));
+}));
+app.delete('/api/cart/items/:id',requireAuth,wrap(async(req,res)=>{
+ const cart=await db.cart.findUnique({where:{userId:req.session!.id}});
+ if(!cart){res.status(404).json({error:'Cart not found'});return;}
+ const result=await db.cartItem.deleteMany({where:{id:String(req.params.id),cartId:cart.id}});
+ if(!result.count){res.status(404).json({error:'Cart item not found'});return;}
+ res.json({ok:true});
+}));
+app.delete('/api/cart',requireAuth,wrap(async(req,res)=>{
+ const cart=await db.cart.findUnique({where:{userId:req.session!.id}});
+ if(cart)await db.cartItem.deleteMany({where:{cartId:cart.id}});
+ res.json({ok:true});
+}));
+app.post('/api/orders',requireAuth,wrap(async(req,res)=>{
+ const {addressId}=z.object({addressId:z.string().min(1)}).parse(req.body);
+ const userId=req.session!.id;
+ const order=await db.$transaction(async(tx)=>{
+  const address=await tx.address.findFirst({where:{id:addressId,userId}});
+  if(!address)throw Object.assign(new Error('Shipping address not found'),{status:404});
+  const cart=await tx.cart.findUnique({where:{userId},include:{items:{include:{product:{include:{inventory:true}}}}}});
+  if(!cart||cart.items.length===0)throw Object.assign(new Error('Your cart is empty'),{status:400});
+  let total=0;
+  const lines=cart.items.map(item=>{
+   if(!item.product.active)throw Object.assign(new Error(item.product.name+' is unavailable'),{status:409});
+   const price=Number(item.product.price);
+   total+=price*item.quantity;
+   return {productId:item.productId,nameSnapshot:item.product.name,unitPrice:price.toFixed(2),quantity:item.quantity,inventory:item.product.inventory};
+  });
+  for(const line of lines){
+   if(line.inventory){
+    const changed=await tx.inventory.updateMany({where:{productId:line.productId,quantity:{gte:line.quantity}},data:{quantity:{decrement:line.quantity}}});
+    if(changed.count!==1)throw Object.assign(new Error('Insufficient stock for '+line.nameSnapshot),{status:409});
+   }
+  }
+  const created=await tx.order.create({data:{userId,total:total.toFixed(2),shippingAddress:{recipient:address.recipient,line1:address.line1,line2:address.line2,city:address.city,state:address.state,postalCode:address.postalCode},items:{create:lines.map(({productId,nameSnapshot,unitPrice,quantity})=>({productId,nameSnapshot,unitPrice,quantity}))}},include:{items:true}});
+  await tx.cartItem.deleteMany({where:{cartId:cart.id}});
+  return created;
+ },{isolationLevel:'Serializable'});
+ res.status(201).json(order);
+}));
 app.get('/api/me/orders',requireAuth,wrap(async(req,res)=>{res.json(await db.order.findMany({where:{userId:req.session!.id},include:{items:true,customOrders:true},orderBy:{createdAt:'desc'}}));}));
 app.get('/api/products',wrap(async(_req,res)=>{res.json(await db.product.findMany({where:{active:true},include:{images:true,inventory:true,categories:true}}));}));
 app.get('/api/admin/stats',requireAuth,admin,wrap(async(_req,res)=>{
