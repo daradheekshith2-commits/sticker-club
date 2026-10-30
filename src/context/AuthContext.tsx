@@ -3,12 +3,21 @@ export type Account={id:string;name:string;email:string;role:'CUSTOMER'|'ADMIN';
 const API=(import.meta.env.VITE_API_URL as string|undefined)??'http://localhost:5000';
 type AuthValue={user:Account|null;ready:boolean;login:(email:string,password:string)=>Promise<Account>;register:(name:string,email:string,password:string)=>Promise<Account>;logout:()=>Promise<void>;request:<T>(path:string,options?:RequestInit)=>Promise<T>;refresh:()=>Promise<void>};
 const Context=createContext<AuthValue|null>(null);
+type SessionPayload={user:Account;accessToken:string};
+let refreshInFlight:Promise<SessionPayload>|null=null;
+async function refreshSession():Promise<SessionPayload>{
+ if(!refreshInFlight){
+  refreshInFlight=fetch(API+'/api/auth/refresh',{method:'POST',credentials:'include'})
+   .then(async r=>{if(!r.ok)throw Error('Not signed in');return await r.json() as SessionPayload;})
+   .finally(()=>{refreshInFlight=null;});
+ }
+ return refreshInFlight;
+}
 export function AuthProvider({children}:{children:ReactNode}){
  const [user,setUser]=useState<Account|null>(null),[token,setToken]=useState<string|null>(null),[ready,setReady]=useState(false);
  const refresh=useCallback(async()=>{
-  const r=await fetch(API+'/api/auth/refresh',{method:'POST',credentials:'include'});
-  if(!r.ok){setToken(null);setUser(null);throw Error('Not signed in');}
-  const data=await r.json() as {user:Account;accessToken:string};setToken(data.accessToken);setUser(data.user);
+  try{const data=await refreshSession();setToken(data.accessToken);setUser(data.user);}
+  catch(error){setToken(null);setUser(null);throw error;}
  },[]);
  useEffect(()=>{void refresh().catch(()=>{}).finally(()=>setReady(true));},[refresh]);
  const authenticate=async(path:string,body:unknown):Promise<Account>=>{
@@ -22,14 +31,12 @@ export function AuthProvider({children}:{children:ReactNode}){
  const request=async<T,>(path:string,options:RequestInit={}):Promise<T>=>{
   let current=token;
   if(!current){
-   const restored=await fetch(API+'/api/auth/refresh',{method:'POST',credentials:'include'});
-   if(!restored.ok)throw Error('Please sign in again');
-   const restoredData=await restored.json() as {user:Account;accessToken:string};
-   current=restoredData.accessToken;setToken(current);setUser(restoredData.user);
+   try{const restored=await refreshSession();current=restored.accessToken;setToken(current);setUser(restored.user);}
+   catch{setToken(null);setUser(null);throw Error('Please sign in again');}
   }
   const send=(t:string)=>fetch(API+path,{...options,credentials:'include',headers:{'Content-Type':'application/json',...(options.headers||{}),Authorization:'Bearer '+t}});
   let r=await send(current);
-  if(r.status===401){try{const x=await fetch(API+'/api/auth/refresh',{method:'POST',credentials:'include'});if(!x.ok)throw Error('Session expired');const data=await x.json();setToken(data.accessToken);setUser(data.user);current=data.accessToken;r=await send(current);}catch{setUser(null);setToken(null);throw Error('Please sign in again');}}
+  if(r.status===401){try{const data=await refreshSession();setToken(data.accessToken);setUser(data.user);current=data.accessToken;r=await send(current);}catch{setUser(null);setToken(null);throw Error('Please sign in again');}}
   if(!r.ok){const d=await r.json().catch(()=>({}));throw Error(d.error||'Request failed');}
   return r.json() as Promise<T>;
  };
