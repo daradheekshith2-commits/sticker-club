@@ -48,11 +48,11 @@ The **first** administrator can be bootstrapped only by setting local `ADMIN_EMA
 
 ## Important limitations
 
-- **The existing React catalogue is still separate from the PostgreSQL catalogue.** The database starts with no products or orders. No invented revenue or customer records are seeded.
-- **Checkout is still a preview.** There is no create-order endpoint or payment collection. No customer should be told an order was placed.
+- **Frontend and database catalogues are initially synchronized by seed, not continuously.** The seed imports the existing products and options without inventing customer orders, revenue or stock.
+- **Checkout has two paths:** a legacy preview and an authenticated database-backed unpaid order path for configured catalogue items and variants. No payment collection exists. Never describe a pending order as paid.
 - Password reset tokens are printed to the backend console **only when NODE_ENV=development**. Production requires an email delivery integration before password reset can function.
 - Access JWTs are held in React memory, refresh tokens in HTTP-only cookies. Refresh endpoints enforce the configured frontend origin. For production, put both frontend and API behind HTTPS, configure a trusted same-site origin, ensure cookie Secure is true, and use a deployment-specific CSRF strategy.
-- This backend must be thoroughly tested and audited before accepting real customers. Its frontend account dashboard currently displays server-derived records but does not expose the full address editing and inventory management experience.
+- This backend must be thoroughly tested and audited before accepting real customers. Its frontend account dashboard currently displays server-derived records but now includes address editing and inventory controls, but other workflows still need release testing.
 - Run `npm run build` and `npm test` at the repository root; run `npm run build` inside `backend`. Confirm database migrations, registration, authorization, logout, reset, crop export and responsive UI in a real local environment before using it.
 
 ## Current endpoints
@@ -74,7 +74,7 @@ Source files have been added, but npm install, Prisma generation, migration exec
 The committed migrations run in lexical order:
 
 1. `20261030110000_init`: creates all base tables, constraints, and core enums.
-2. `20261030120000_cart_checkout`: adds PaymentStatus, order-address snapshots and cart-item uniqueness.
+2. `20261030120000_cart_checkout`: adds PaymentStatus, order-address snapshots and cart-item uniqueness.\n3. `20261030130000_product_variants`: stores variant prices and selected options on carts/orders.
 
 From the backend directory, after configuring the local PostgreSQL role/database and `.env`, run:
 
