@@ -2,6 +2,7 @@ import {useEffect,useState,type FormEvent} from 'react';
 import {useAuth} from '../../context/AuthContext';
 import {useCart} from '../../context/CartContext';
 import {Link} from '../../router/router';
+import type {ProductCartLine} from '../../utils/cart';
 
 type Address={id:string;recipient:string;line1:string;city:string;state:string;postalCode:string;isDefault:boolean};
 type ServerCart={items:Array<{productId:string;quantity:number;product:{name:string;price:string;active:boolean;inventory:{quantity:number}|null}}>} ;
@@ -22,7 +23,7 @@ export function LiveOrderCheckout(){
  const [error,setError]=useState('');
  const [order,setOrder]=useState<Order|null>(null);
  const [preview,setPreview]=useState<ServerCart|null>(null);
- const standard=lines.filter(l=>l.type==='product'&&!l.variant);
+ const standard=lines.filter((l):l is ProductCartLine=>l.type==='product'&&!l.variant);
  const unsupported=lines.filter(l=>l.type!=='product'||Boolean(l.variant));
  useEffect(()=>{
   if(!user)return;
