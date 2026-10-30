@@ -1,0 +1,44 @@
+name: Development branch checks
+
+on:
+  push:
+    branches:
+      - design/category-cards-reference-20261030
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: Frontend TypeScript, tests and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+  backend:
+    name: Backend compilation and Prisma validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npx prisma validate
+        env:
+          DATABASE_URL: postgresql://example:example@127.0.0.1:5432/stickerclub?schema=public
+      - run: npm run db:generate
+        env:
+          DATABASE_URL: postgresql://example:example@127.0.0.1:5432/stickerclub?schema=public
+      - run: npm run build
