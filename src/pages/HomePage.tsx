@@ -50,7 +50,7 @@ function CategoryDoors() {
       cta: 'SHOP STICKERS',
       to: shopUrl({ category: 'stickers' }),
       category: 'stickers' as const,
-      color: '#FFD447',
+      color: '#FFE06A',
     },
     {
       id: 'posters',
@@ -60,7 +60,7 @@ function CategoryDoors() {
       cta: 'SHOP POSTERS',
       to: shopUrl({ category: 'posters' }),
       category: 'posters' as const,
-      color: '#8FD3FF',
+      color: '#A6DFF4',
     },
     {
       id: 'shop-your-own',
@@ -70,12 +70,12 @@ function CategoryDoors() {
       cta: 'START CREATING',
       to: '/create-your-stickers',
       category: null,
-      color: '#A8E8C4',
+      color: '#A6E9C0',
     },
   ];
 
   return (
-    <section className="category-showcase relative isolate overflow-hidden bg-[#06483D] py-6 sm:py-7" aria-label="Shop categories">
+    <section className="category-showcase relative isolate overflow-hidden bg-[#06483D] py-5 sm:py-6" aria-label="Shop categories">
       <div aria-hidden className="cinema-grain pointer-events-none absolute inset-0 -z-10 opacity-[0.07]" />
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_12%_20%,rgba(27,127,103,0.38),transparent_44%),radial-gradient(ellipse_at_88%_85%,rgba(3,25,21,0.3),transparent_45%)]" />
 
@@ -89,12 +89,12 @@ function CategoryDoors() {
         <path d="M3 29c12-20 24-24 34-16S54 30 76 4M8 36c14-15 26-19 39-10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
 
-      <ul className="relative mx-auto grid max-w-[1180px] grid-cols-1 gap-5 px-4 sm:px-6 md:grid-cols-3 md:gap-5">
+      <ul className="relative mx-auto grid max-w-[1180px] grid-cols-1 gap-4 px-4 sm:px-6 md:grid-cols-3 md:gap-5">
         {cards.map((card) => (
           <li key={card.id} className="min-w-0">
             <Link
               to={card.to}
-              className="on-light group relative flex min-h-[260px] aspect-[1.14/1] flex-col overflow-hidden rounded-[15px] border border-[#101815]/90 p-3.5 shadow-[0_9px_18px_rgba(0,0,0,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_15px_28px_rgba(0,0,0,0.28)] sm:p-4"
+              className="on-light group relative flex min-h-[260px] aspect-[1.14/1] flex-col overflow-hidden rounded-[12px] border border-[#101815]/90 p-3.5 shadow-[0_9px_18px_rgba(0,0,0,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_15px_28px_rgba(0,0,0,0.28)] sm:p-4"
               style={{ backgroundColor: card.color }}
             >
               <div className="flex items-center justify-between gap-3">
