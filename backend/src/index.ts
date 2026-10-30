@@ -251,7 +251,21 @@ app.put('/api/admin/inventory/:productId',requireAuth,admin,wrap(async(req,res)=
 app.get('/api/admin/orders',requireAuth,admin,wrap(async(_req,res)=>{res.json(await db.order.findMany({include:{items:true,user:{select:{id:true,name:true,email:true}}},orderBy:{createdAt:'desc'}}));}));
 app.patch('/api/admin/orders/:id',requireAuth,admin,wrap(async(req,res)=>{
  const {status}=z.object({status:z.enum(['PENDING','CONFIRMED','PROCESSING','SHIPPED','COMPLETED','CANCELLED'])}).parse(req.body);
- res.json(await db.order.update({where:{id:String(req.params.id)},data:{status}}));
+ const transitions:Record<string,string[]>={
+  PENDING:['CONFIRMED','CANCELLED'],
+  CONFIRMED:['PROCESSING','CANCELLED'],
+  PROCESSING:['SHIPPED','CANCELLED'],
+  SHIPPED:['COMPLETED'],
+  COMPLETED:[],
+  CANCELLED:[]
+ };
+ const id=String(req.params.id);
+ const order=await db.order.findUnique({where:{id},select:{status:true}});
+ if(!order){res.status(404).json({error:'Order not found'});return;}
+ if(!transitions[order.status].includes(status)){res.status(409).json({error:'Invalid order status transition'});return;}
+ const changed=await db.order.updateMany({where:{id,status:order.status},data:{status}});
+ if(changed.count!==1){res.status(409).json({error:'Order status changed; refresh and try again'});return;}
+ res.json(await db.order.findUnique({where:{id}}));
 }));
 app.use((err:unknown,_req:Request,res:Response,_next:NextFunction)=>{
  if(err instanceof z.ZodError){res.status(400).json({error:'Invalid input',issues:err.issues});return;}
