@@ -153,23 +153,27 @@ app.delete('/api/me/addresses/:id',requireAuth,wrap(async(req,res)=>{
  const result=await db.address.deleteMany({where:{id:String(req.params.id),userId:req.session!.id}});
  if(!result.count){res.status(404).json({error:'Not found'});return;}res.json({ok:true});
 }));
-const cartItemInput=z.object({productId:z.string().min(1),quantity:z.number().int().min(1).max(99)});
-const getCart=async(userId:string)=>db.cart.upsert({where:{userId},create:{userId},update:{},include:{items:{include:{product:{include:{images:true,inventory:true,categories:true}}}}}});
+const cartItemInput=z.object({productId:z.string().min(1),quantity:z.number().int().min(1).max(99),variantId:z.string().max(80).optional()});
+const getCart=async(userId:string)=>db.cart.upsert({where:{userId},create:{userId},update:{},include:{items:{include:{product:{include:{images:true,inventory:true,categories:true,variants:true}}}}}});
 app.get('/api/cart',requireAuth,wrap(async(req,res)=>{res.json(await getCart(req.session!.id));}));
 app.post('/api/cart/items',requireAuth,wrap(async(req,res)=>{
- const {productId,quantity}=cartItemInput.parse(req.body);
- const product=await db.product.findFirst({where:{id:productId,active:true},include:{inventory:true}});
+ const {productId,quantity,variantId:requestedVariant}=cartItemInput.parse(req.body);
+ const variantId=requestedVariant??'';
+ const product=await db.product.findFirst({where:{id:productId,active:true},include:{inventory:true,variants:true}});
  if(!product){res.status(404).json({error:'Product unavailable'});return;}
  if(!product.inventory){res.status(409).json({error:'Stock has not been configured for this product'});return;}
+ if(product.variants.length && !product.variants.some(v=>v.id===variantId)){res.status(400).json({error:'Choose a valid product option'});return;}
+ if(!product.variants.length && variantId){res.status(400).json({error:'This product does not offer variants'});return;}
  if(product.inventory.quantity<quantity){res.status(409).json({error:'Not enough stock',available:product.inventory.quantity});return;}
  const item=await db.$transaction(async(tx)=>{
   const cart=await tx.cart.upsert({where:{userId:req.session!.id},create:{userId:req.session!.id},update:{}});
-  const previous=await tx.cartItem.findUnique({where:{cartId_productId:{cartId:cart.id,productId}}});
+  const previous=await tx.cartItem.findUnique({where:{cartId_productId_variantId:{cartId:cart.id,productId,variantId}}});
   const next=(previous?.quantity??0)+quantity;
-  if(next>99)throw Object.assign(new Error('Maximum 99 of one product per cart'),{status:400});
+  if(next>99)throw Object.assign(new Error('Maximum 99 of one option per cart'),{status:400});
+  const stored=await tx.cartItem.aggregate({where:{cartId:cart.id,productId},_sum:{quantity:true}});
   const stock=await tx.inventory.findUnique({where:{productId}});
-  if(!stock||stock.quantity<next)throw Object.assign(new Error('Not enough stock for total cart quantity'),{status:409});
-  return tx.cartItem.upsert({where:{cartId_productId:{cartId:cart.id,productId}},create:{cartId:cart.id,productId,quantity},update:{quantity:next}});
+  if(!stock||stock.quantity<(stored._sum.quantity??0)+quantity)throw Object.assign(new Error('Not enough stock for all selected variants'),{status:409});
+  return tx.cartItem.upsert({where:{cartId_productId_variantId:{cartId:cart.id,productId,variantId}},create:{cartId:cart.id,productId,variantId,quantity},update:{quantity:next}});
  },{isolationLevel:'Serializable'});
  res.status(201).json(item);
 }));
@@ -180,7 +184,8 @@ app.patch('/api/cart/items/:id',requireAuth,wrap(async(req,res)=>{
  const item=await db.cartItem.findFirst({where:{id:String(req.params.id),cartId:cart.id},include:{product:{include:{inventory:true}}}});
  if(!item){res.status(404).json({error:'Cart item not found'});return;}
  if(!item.product.inventory){res.status(409).json({error:'Stock is not configured for this product'});return;}
- if(item.product.inventory.quantity<quantity){res.status(409).json({error:'Not enough stock',available:item.product.inventory.quantity});return;}
+ const other=await db.cartItem.aggregate({where:{cartId:cart.id,productId:item.productId,id:{not:item.id}},_sum:{quantity:true}});
+ if(item.product.inventory.quantity<(other._sum.quantity??0)+quantity){res.status(409).json({error:'Not enough stock across variants',available:item.product.inventory.quantity});return;}
  res.json(await db.cartItem.update({where:{id:item.id},data:{quantity}}));
 }));
 app.delete('/api/cart/items/:id',requireAuth,wrap(async(req,res)=>{
@@ -195,13 +200,12 @@ app.delete('/api/cart',requireAuth,wrap(async(req,res)=>{
  if(cart)await db.cartItem.deleteMany({where:{cartId:cart.id}});
  res.json({ok:true});
 }));
-// Preview-only catalogue variants must not be charged at the base product price.
-// A real order can contain only products whose storefront price is unambiguous.
+// Client-facing catalogue and variant price review uses authoritative database prices.
 app.get('/api/checkout/availability',requireAuth,wrap(async(req,res)=>{
  const cart=await getCart(req.session!.id);
  res.json({items:cart.items.map(item=>({
-  id:item.id,productId:item.productId,quantity:item.quantity,
-  name:item.product.name,price:item.product.price.toString(),
+  id:item.id,productId:item.productId,variantId:item.variantId,quantity:item.quantity,
+  name:item.product.name,price:(item.product.variants.find(v=>v.id===item.variantId)?.price??item.product.price).toString(),
   active:item.product.active,available:item.product.inventory?.quantity??null
  }))});
 }));
@@ -211,14 +215,18 @@ app.post('/api/orders',requireAuth,wrap(async(req,res)=>{
  const order=await db.$transaction(async(tx)=>{
   const address=await tx.address.findFirst({where:{id:addressId,userId}});
   if(!address)throw Object.assign(new Error('Shipping address not found'),{status:404});
-  const cart=await tx.cart.findUnique({where:{userId},include:{items:{include:{product:{include:{inventory:true}}}}}});
+  const cart=await tx.cart.findUnique({where:{userId},include:{items:{include:{product:{include:{inventory:true,variants:true}}}}}});
   if(!cart||cart.items.length===0)throw Object.assign(new Error('Your cart is empty'),{status:400});
   let total=new Prisma.Decimal(0);
   const lines=cart.items.map(item=>{
    if(!item.product.active)throw Object.assign(new Error(item.product.name+' is unavailable'),{status:409});
    if(!item.product.inventory)throw Object.assign(new Error('Inventory not configured for '+item.product.name),{status:409});
-   total=total.add(item.product.price.mul(item.quantity));
-   return {productId:item.productId,nameSnapshot:item.product.name,unitPrice:item.product.price.toFixed(2),quantity:item.quantity,inventory:item.product.inventory};
+   const option=item.variantId?item.product.variants.find(v=>v.id===item.variantId):undefined;
+   if(item.product.variants.length&&!option)throw Object.assign(new Error('Selected product variant is no longer available'),{status:409});
+   if(!item.product.variants.length&&item.variantId)throw Object.assign(new Error('Invalid product variant'),{status:409});
+   const price=option?.price??item.product.price;
+   total=total.add(price.mul(item.quantity));
+   return {productId:item.productId,variantId:option?.id??null,variantLabel:option?.label??null,nameSnapshot:item.product.name,unitPrice:price.toFixed(2),quantity:item.quantity,inventory:item.product.inventory};
   });
   for(const line of lines){
    if(line.inventory){
@@ -226,7 +234,7 @@ app.post('/api/orders',requireAuth,wrap(async(req,res)=>{
     if(changed.count!==1)throw Object.assign(new Error('Insufficient stock for '+line.nameSnapshot),{status:409});
    }
   }
-  const created=await tx.order.create({data:{userId,total:total.toFixed(2),shippingAddress:{recipient:address.recipient,line1:address.line1,line2:address.line2,city:address.city,state:address.state,postalCode:address.postalCode},items:{create:lines.map(({productId,nameSnapshot,unitPrice,quantity})=>({productId,nameSnapshot,unitPrice,quantity}))}},include:{items:true}});
+  const created=await tx.order.create({data:{userId,total:total.toFixed(2),shippingAddress:{recipient:address.recipient,line1:address.line1,line2:address.line2,city:address.city,state:address.state,postalCode:address.postalCode},items:{create:lines.map(({productId,variantId,variantLabel,nameSnapshot,unitPrice,quantity})=>({productId,variantId,variantLabel,nameSnapshot,unitPrice,quantity}))}},include:{items:true}});
   await tx.cartItem.deleteMany({where:{cartId:cart.id}});
   return created;
  },{isolationLevel:'Serializable'});
@@ -249,7 +257,7 @@ app.get('/api/products',wrap(async(req,res)=>{
    {slug:{contains:query.q,mode:'insensitive'}},
    {description:{contains:query.q,mode:'insensitive'}}
   ]}:{}),...(query.category?{categories:{some:{categoryId:query.category}}}:{})},
-  include:{images:true,inventory:true,categories:true},
+  include:{images:true,inventory:true,categories:true,variants:true},
   orderBy:{name:'asc'},take:query.limit
  }));
 }));
