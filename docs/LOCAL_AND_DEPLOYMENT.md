@@ -4,7 +4,7 @@
 
 The React/Vite frontend remains in the repository root and the Express/Prisma server is in `backend/`. Local PostgreSQL is the development database. The database cart and order endpoints write **unpaid** orders; there is **no payment provider** and no production deployment authorization.
 
-Custom sticker uploads, custom walls, custom packs, and poster variants **do not yet map to an orderable database SKU**. The authenticated checkout deliberately blocks those entries rather than charging an incorrect price. Product display data is still bundled into the frontend; seeding copies the initial catalog into PostgreSQL but does not keep both datasets synchronized automatically.
+Custom sticker uploads, custom walls and custom packs **do not yet map to an orderable database SKU**. Existing catalogue variants now have server-priced options and can be ordered after inventory setup. The authenticated checkout deliberately blocks those entries rather than charging an incorrect price. Product display data is still bundled into the frontend; seeding copies the initial catalog into PostgreSQL but does not keep both datasets synchronized automatically.
 
 ## Windows prerequisites
 
@@ -84,7 +84,7 @@ The tests use a temporary database and **must never run against a production dat
 - **Session cookies:** the current backend refresh cookie is HTTP-only, Secure in production, and SameSite=Strict. For cross-origin frontend and API, arrange them under compatible same-site domains or a same-origin reverse proxy; independent Vercel and unrelated backend hostnames will not automatically share strict refresh cookies. Enforce HTTPS and review CORS, CSRF, proxy trust and cookie domains before launch.
 - **Uploads:** use authenticated persistent object storage. Browser `blob:` URLs are temporary and cannot serve a future printer or customer order history.
 - **Payments:** there is no active payment gateway. Treat every server-created order as payment pending. A verified payment-provider callback and payment state machine are required before marking orders paid.
-- **Checkout:** only standard, database-priced, inventory-configured SKUs are eligible. Poster variants and custom orders need server-side options and order storage first.
+- **Checkout:** only standard, database-priced, inventory-configured SKUs are eligible. Catalogue variants are priced by PostgreSQL, but custom-upload orders still require persistent storage and server-side configurations.
 - **Catalogue:** decide whether PostgreSQL will be authoritative for product prices/availability across the storefront, or implement a controlled publish/sync pipeline. The current frontend can show bundled prices that differ from admin-updated database prices; the server always recalculates at checkout.
 
 ## Required release gates (not yet all satisfied)
@@ -110,7 +110,7 @@ The tests use a temporary database and **must never run against a production dat
 | Browser CORS error | Match `FRONTEND_ORIGIN` to the exact Vite origin; reload backend after change |
 | Session won't restore | Check local cookies, frontend API URL, HTTPS/strict SameSite compatibility in production |
 | Invalid JWT configuration | Set a long random `JWT_SECRET` in local backend `.env` |
-| Cart rejects product | Admin must configure real inventory; not all frontend product variants are supported |
+| Cart rejects product | Admin must configure real inventory; custom upload and made-to-order configurations are not yet supported |
 | Login says backend missing | Set `VITE_API_URL` for the Vite build, or run local `http://localhost:5000` in development |
 
 **No release has been published by this guide.**
