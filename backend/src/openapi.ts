@@ -1,6 +1,6 @@
 export const openapi = {
  openapi: '3.0.3',
- info: { title: 'Sticker Club Local API', version: '0.1.0', description: 'Self-managed local development API. Checkout and orders are not integrated yet.' },
+ info: { title: 'Sticker Club Local API', version: '0.1.0', description: 'Self-managed local development API. Standard catalogue checkout creates unpaid orders only; custom products, variants and payments are not integrated.' },
  servers: [{ url: 'http://localhost:5000' }],
  components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } } },
  paths: {
@@ -15,6 +15,17 @@ export const openapi = {
   '/api/me/addresses':{get:{summary:'List own addresses',security:[{bearerAuth:[]}],responses:{'200':{description:'Addresses'}}},post:{summary:'Create address',security:[{bearerAuth:[]}],responses:{'201':{description:'Created'}}}},
   '/api/me/orders':{get:{summary:'List own orders',security:[{bearerAuth:[]}],responses:{'200':{description:'Orders'}}}},
   '/api/products':{get:{summary:'List active backend products',responses:{'200':{description:'Products'}}}},
+  '/api/me/password':{post:{summary:'Change password using current password; revoke refresh sessions',security:[{bearerAuth:[]}],responses:{'200':{description:'Password updated'},'403':{description:'Incorrect current password'}}}},
+  '/api/me/addresses/{id}':{patch:{summary:'Edit owned address',security:[{bearerAuth:[]}],responses:{'200':{description:'Updated'}}},delete:{summary:'Delete owned address',security:[{bearerAuth:[]}],responses:{'200':{description:'Deleted'}}}},
+  '/api/me/addresses/{id}/default':{post:{summary:'Set default owned address',security:[{bearerAuth:[]}],responses:{'200':{description:'Default updated'}}}},
+  '/api/me/orders/{id}':{get:{summary:'Get one customer-owned order',security:[{bearerAuth:[]}],responses:{'200':{description:'Order'},'404':{description:'Not found or not owned'}}}},
+  '/api/cart':{get:{summary:'Current authenticated database cart',security:[{bearerAuth:[]}],responses:{'200':{description:'Cart'}}},delete:{summary:'Clear database cart',security:[{bearerAuth:[]}],responses:{'200':{description:'Cleared'}}}},
+  '/api/cart/items':{post:{summary:'Add a standard catalogue SKU to cart',security:[{bearerAuth:[]}],responses:{'201':{description:'Cart item'},'409':{description:'Stock not configured or insufficient'}}}},
+  '/api/cart/items/{id}':{patch:{summary:'Set cart line quantity',security:[{bearerAuth:[]}],responses:{'200':{description:'Updated'}}},delete:{summary:'Remove cart line',security:[{bearerAuth:[]}],responses:{'200':{description:'Removed'}}}},
+  '/api/checkout/availability':{get:{summary:'Review server-prices and stock of cart items',security:[{bearerAuth:[]}],responses:{'200':{description:'Availability'}}}},
+  '/api/orders':{post:{summary:'Create unpaid order from authenticated cart and saved address',security:[{bearerAuth:[]}],requestBody:{required:true,content:{'application/json':{schema:{type:'object',required:['addressId'],properties:{addressId:{type:'string'}}}}}},responses:{'201':{description:'Order with pending payment'},'409':{description:'Unavailable stock'}}}},
+  '/api/products/{slug}':{get:{summary:'Get active product details',responses:{'200':{description:'Product'},'404':{description:'Not found'}}}},
+  '/api/admin/inventory/{productId}':{put:{summary:'Set recorded inventory quantity',security:[{bearerAuth:[]}],responses:{'200':{description:'Updated stock'},'403':{description:'Forbidden'}}}},
   '/api/admin/stats':{get:{summary:'Administrator statistics',security:[{bearerAuth:[]}],responses:{'200':{description:'Database totals'},'403':{description:'Forbidden'}}}},
   '/api/admin/products':{get:{summary:'List products',security:[{bearerAuth:[]}],responses:{'200':{description:'Products'}}},post:{summary:'Create product',security:[{bearerAuth:[]}],responses:{'201':{description:'Created'}}}},
   '/api/admin/orders':{get:{summary:'List orders',security:[{bearerAuth:[]}],responses:{'200':{description:'Orders'}}}}
