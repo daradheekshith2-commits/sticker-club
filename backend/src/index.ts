@@ -241,7 +241,23 @@ app.get('/api/me/orders/:id',requireAuth,wrap(async(req,res)=>{
  if(!order){res.status(404).json({error:'Order not found'});return;}
  res.json(order);
 }));
-app.get('/api/products',wrap(async(_req,res)=>{res.json(await db.product.findMany({where:{active:true},include:{images:true,inventory:true,categories:true}}));}));
+app.get('/api/products',wrap(async(req,res)=>{
+ const query=z.object({q:z.string().trim().max(100).optional(),category:z.string().max(60).optional(),limit:z.coerce.number().int().min(1).max(100).default(100)}).parse(req.query);
+ res.json(await db.product.findMany({
+  where:{active:true,...(query.q?{OR:[
+   {name:{contains:query.q,mode:'insensitive'}},
+   {slug:{contains:query.q,mode:'insensitive'}},
+   {description:{contains:query.q,mode:'insensitive'}}
+  ]}:{}),...(query.category?{categories:{some:{categoryId:query.category}}}:{})},
+  include:{images:true,inventory:true,categories:true},
+  orderBy:{name:'asc'},take:query.limit
+ }));
+}));
+app.get('/api/products/:slug',wrap(async(req,res)=>{
+ const product=await db.product.findFirst({where:{slug:String(req.params.slug),active:true},include:{images:true,inventory:true,categories:true}});
+ if(!product){res.status(404).json({error:'Product not found'});return;}
+ res.json(product);
+}));
 app.get('/api/admin/stats',requireAuth,admin,wrap(async(_req,res)=>{
  const [customers,products,orders,pending,rev]=await Promise.all([db.user.count({where:{role:'CUSTOMER'}}),db.product.count(),db.order.count(),db.order.count({where:{status:'PENDING'}}),db.order.aggregate({_sum:{total:true},where:{status:{not:'CANCELLED'}}})]);
  res.json({customers,products,orders,pendingOrders:pending,totalRevenue:rev._sum.total?.toString()??'0'});
