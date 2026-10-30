@@ -45,9 +45,6 @@ export function AuthPage({mode}:{mode:Mode}){
 function Guard({role,children}:{role:'ADMIN'|'CUSTOMER';children:(u:Account)=>ReactNode}){const {user,ready}=useAuth();if(!ready)return <Shell title="Loading account…"><p>Checking your session.</p></Shell>;if(!user)return <Shell title="Sign in required"><Link className="btn-accent" to={role==='ADMIN'?'/admin/login':'/login'}>Sign in</Link></Shell>;if(role==='ADMIN'&&user.role!=='ADMIN')return <Shell title="Access denied"><p>Administrator permissions are required.</p></Shell>;return <>{children(user)}</>;}
 export function CustomerDashboard(){
  usePageMeta('My account');
- const [error,setError]=useState('');
- const {user}=useAuth();
-
  return <Guard role="CUSTOMER">{u=><main className="mx-auto max-w-5xl px-4 py-16"><h1 className="font-display text-5xl font-extrabold">Your account.</h1><p className="mt-3 text-ink-soft">{u.name} · {u.email}</p><div className="mt-10 grid gap-5 md:grid-cols-2"><CustomerOrdersPanel /><AddressManager /><section className="rounded-2xl bg-white p-6"><h2 className="text-2xl font-bold">Custom orders</h2><p className="mt-4 text-ink-soft">Custom designs appear here after a real order is placed.</p></section><AccountSettingsPanel /></div></main>}</Guard>;
 }
 export function AdminDashboard(){
