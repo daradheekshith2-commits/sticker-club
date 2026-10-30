@@ -25,35 +25,57 @@ function Page({ title, crumb, intro, children }: { title: string; crumb: string;
 }
 
 export function AboutPage() {
-  usePageMeta('About', `What ${brand.displayName} is, who it’s for and how we’re starting.`);
+  usePageMeta('About', 'Boring was never our thing. Meet Sticker Club.');
+  const collections = [
+    { title: 'Stickers', copy: 'Little designs with a lot to say.', to: shopUrl({ category: 'stickers' }), color: '#FFD447' },
+    { title: 'Posters', copy: 'Give the walls a personality of their own.', to: shopUrl({ category: 'posters' }), color: '#8FD3FF' },
+    { title: 'Cars & Bikes', copy: 'For track-day dreamers and everyday riders.', to: shopUrl({ collections: ['quotes'] }), color: '#FF5B2E' },
+    { title: 'Shop Your Own', copy: 'Your design, your shape, your rules.', to: '/create-your-stickers', color: '#A8F0DC' },
+  ];
   return (
-    <Page title="Started small, on purpose." crumb="About" intro={`${brand.displayName} is a student-run sticker and poster brand starting out in ${brand.city}.`}>
-      <p>
-        We make original stickers — minis, sheets and themed packs — for the things you carry every day, and posters and wall packs for the rooms you live in:
-        hostel rooms, PGs and desks.
-      </p>
-      <p>
-        We’re at the very beginning. This website is our first draft, the products are demo designs, and we’re talking to students on our own campus to
-        find out what they’d actually buy before we print anything at scale.
-      </p>
-      <h2>How we plan to work</h2>
-      <ul className="list-disc space-y-2 pl-6">
-        <li>Every design is drawn by us. No copied artwork, logos or characters.</li>
-        <li>We print in small batches with local suppliers, after testing samples ourselves.</li>
-        <li>We’ll start with campus pickup and simple delivery, then grow if people like what we make.</li>
-        <li>Stickers and posters are equal parts of the range. Custom photo collages may come later.</li>
-      </ul>
-      <h2>Help us decide</h2>
-      <p>Tell us which designs you’d buy, what’s missing and what feels too expensive. Honest feedback is the most useful thing you can give us right now.</p>
-      <div className="flex flex-wrap gap-3">
-        <Link to={shopUrl({ category: 'stickers' })} className="btn-primary">
-          Browse the demo range
-        </Link>
-        <Link to="/contact" className="btn-ghost">
-          Get in touch
-        </Link>
-      </div>
-    </Page>
+    <div>
+      <section className="relative overflow-hidden bg-[#F5F0E6] px-4 py-20 text-[#03110f] sm:px-6 md:py-28">
+        <div className="mx-auto max-w-7xl">
+          <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'About' }]} />
+          <p className="mt-14 text-xs font-extrabold uppercase tracking-[0.2em]">A little rebellion against boring things</p>
+          <h1 className="mt-5 max-w-5xl font-display text-[clamp(3.5rem,10vw,9rem)] font-extrabold leading-[0.87] tracking-tight">BORING WAS NEVER OUR THING.</h1>
+          <p className="mt-8 max-w-xl text-xl leading-relaxed sm:text-2xl">Your laptop, your walls, your world. Make every little corner feel a little more like you.</p>
+          <Link to="/shop" className="mt-8 inline-flex rounded-full bg-[#03110f] px-7 py-4 text-sm font-bold text-[#F5F0E6] transition hover:-translate-y-1">Explore the club →</Link>
+        </div>
+      </section>
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-24 sm:px-6 md:grid-cols-2 md:gap-16">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-mint">01 / What we believe</p>
+        <div>
+          <h2 className="font-display text-5xl font-extrabold leading-none sm:text-7xl">SMALL STICKERS. BIG PERSONALITY.</h2>
+          <p className="mt-7 max-w-lg text-lg leading-relaxed text-ink-soft">A plain laptop is fine. A wall with nothing on it is fine. But why settle for fine? Sticker Club is about making your everyday space unmistakably yours—with small designs, bold ideas and plenty of character.</p>
+          <p className="mt-4 max-w-lg text-sm text-ink-soft">We're starting as a student-run brand in {brand.city}. The catalogue is a prototype while we test products and finishes.</p>
+        </div>
+      </section>
+      <section className="bg-[#F5F0E6] px-4 py-24 text-[#03110f] sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em]">02 / Find your thing</p>
+          <h2 className="mt-3 max-w-3xl font-display text-5xl font-extrabold leading-none sm:text-7xl">YOUR WORLD, YOUR COLLECTION.</h2>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+            {collections.map((c) => (
+              <Link key={c.title} to={c.to} className="group flex min-h-64 flex-col justify-between rounded-3xl border-2 border-[#03110f] p-7 transition duration-200 hover:-translate-y-1 hover:shadow-[8px_8px_0_#03110f]" style={{ backgroundColor: c.color }}>
+                <span className="self-end text-2xl transition group-hover:translate-x-1" aria-hidden>↗</span>
+                <span><span className="block font-display text-4xl font-extrabold sm:text-5xl">{c.title}</span><span className="mt-2 block max-w-xs text-base">{c.copy}</span></span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-24 sm:px-6 md:grid-cols-2">
+        <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-mint">03 / Make it yours</p><h2 className="mt-4 font-display text-5xl font-extrabold leading-none sm:text-7xl">YOUR IDEAS. YOUR RULES.</h2></div>
+        <div><p className="text-lg leading-relaxed text-ink-soft">Your sketches, your photos, your ideas. Upload a design, adjust the crop, pick a shape and create a sticker that could only belong to you.</p><Link to="/create-your-stickers" className="btn-accent mt-6">Create your own sticker →</Link></div>
+      </section>
+      <section className="bg-[#06483D] px-4 py-24 text-center sm:px-6">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-mint">This is your sign</p>
+        <h2 className="mx-auto mt-5 max-w-5xl font-display text-[clamp(3.5rem,9vw,8rem)] font-extrabold leading-[0.9]">THE WORLD IS YOUR CANVAS.</h2>
+        <p className="mt-6 text-lg">Find something that feels like you.</p>
+        <Link to="/shop" className="mt-8 inline-flex rounded-full bg-[#F5F0E6] px-8 py-4 text-sm font-extrabold text-[#03110f] transition hover:-translate-y-1">FIND YOUR VIBE →</Link>
+      </section>
+    </div>
   );
 }
 
