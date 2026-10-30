@@ -1,11 +1,13 @@
 import {createContext,useCallback,useContext,useEffect,useMemo,useState,type ReactNode} from 'react';
 export type Account={id:string;name:string;email:string;role:'CUSTOMER'|'ADMIN';phone?:string|null};
-const API=(import.meta.env.VITE_API_URL as string|undefined)??'http://localhost:5000';
+// Never silently point a deployed storefront at the visitor's own localhost.
+const API=(import.meta.env.VITE_API_URL as string|undefined)?.replace(/\\/$/,'') || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 type AuthValue={user:Account|null;ready:boolean;login:(email:string,password:string)=>Promise<Account>;register:(name:string,email:string,password:string)=>Promise<Account>;logout:()=>Promise<void>;request:<T>(path:string,options?:RequestInit)=>Promise<T>;refresh:()=>Promise<void>};
 const Context=createContext<AuthValue|null>(null);
 type SessionPayload={user:Account;accessToken:string};
 let refreshInFlight:Promise<SessionPayload>|null=null;
 async function refreshSession():Promise<SessionPayload>{
+ if(!API)throw Error('Authentication backend is not configured.');
  if(!refreshInFlight){
   refreshInFlight=fetch(API+'/api/auth/refresh',{method:'POST',credentials:'include'})
    .then(async r=>{if(!r.ok)throw Error('Not signed in');return await r.json() as SessionPayload;})
@@ -21,14 +23,16 @@ export function AuthProvider({children}:{children:ReactNode}){
  },[]);
  useEffect(()=>{void refresh().catch(()=>{}).finally(()=>setReady(true));},[refresh]);
  const authenticate=async(path:string,body:unknown):Promise<Account>=>{
+  if(!API)throw Error('Authentication backend is not configured.');
   const r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(body)});
   const data=await r.json();if(!r.ok)throw Error(data.error||'Authentication failed');
   setToken(data.accessToken);setUser(data.user);return data.user as Account;
  };
  const login=(email:string,password:string)=>authenticate('/api/auth/login',{email,password});
  const register=(name:string,email:string,password:string)=>authenticate('/api/auth/register',{name,email,password});
- const logout=async()=>{await fetch(API+'/api/auth/logout',{method:'POST',credentials:'include'}).catch(()=>{});setUser(null);setToken(null);};
+ const logout=async()=>{if(!API){setUser(null);setToken(null);return;}await fetch(API+'/api/auth/logout',{method:'POST',credentials:'include'}).catch(()=>{});setUser(null);setToken(null);};
  const request=async<T,>(path:string,options:RequestInit={}):Promise<T>=>{
+  if(!API)throw Error('Authentication backend is not configured.');
   let current=token;
   if(!current){
    try{const restored=await refreshSession();current=restored.accessToken;setToken(current);setUser(restored.user);}
