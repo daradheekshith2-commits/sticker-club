@@ -1,4 +1,5 @@
-import { LuArrowRight } from 'react-icons/lu';
+import { useState } from 'react';
+import { LuArrowLeft, LuArrowRight } from 'react-icons/lu';
 import { products } from '../data/products';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { Link } from '../router/router';
@@ -132,11 +133,36 @@ function Collect() {
   );
 }
 
+function shuffleItems<T,>(items: T[]): T[] {
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 function FeaturedRow({ category, eyebrow, title, linkLabel }: { category: Category; eyebrow: string; title: string; linkLabel: string }) {
-  const items = sortProducts(
-    products.filter((p) => p.featured && p.category === category && isPurchasable(p)),
+  const candidates = sortProducts(
+    products.filter((p) => p.category === category && isPurchasable(p) && (category === 'stickers' || p.featured)),
     'featured',
-  ).slice(0, 4);
+  );
+  const initialItems = candidates.slice(0, 4);
+  const [randomItems, setRandomItems] = useState<typeof initialItems | null>(null);
+  const items = category === 'stickers' ? randomItems ?? initialItems : initialItems;
+
+  const showRandomStickers = () => {
+    if (category !== 'stickers' || candidates.length <= 4) return;
+    const currentIds = new Set(items.map((product) => product.id));
+    let nextItems = shuffleItems(candidates).slice(0, 4);
+    let attempts = 0;
+    while (nextItems.every((product) => currentIds.has(product.id)) && attempts < 8) {
+      nextItems = shuffleItems(candidates).slice(0, 4);
+      attempts += 1;
+    }
+    setRandomItems(nextItems);
+  };
+
   return (
     <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-6" aria-labelledby={`featured-${category}`}>
       <SectionHeading
@@ -149,7 +175,31 @@ function FeaturedRow({ category, eyebrow, title, linkLabel }: { category: Catego
           </Link>
         }
       />
-      <ProductGrid products={items} />
+      <div className={category === 'stickers' ? 'relative' : undefined}>
+        <ProductGrid products={items} />
+        {category === 'stickers' && (
+          <>
+            <button
+              type="button"
+              onClick={showRandomStickers}
+              className="absolute left-0 top-[25%] z-20 grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[#5d9d8f] bg-[#03110f] text-[#a8f0dc] shadow-lg transition hover:bg-[#a8f0dc] hover:text-[#03110f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a8f0dc] sm:left-[-1.15rem] sm:size-12"
+              aria-label="Show a random selection of stickers"
+              title="Shuffle stickers"
+            >
+              <LuArrowLeft aria-hidden className="size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={showRandomStickers}
+              className="absolute right-0 top-[25%] z-20 grid size-10 translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[#5d9d8f] bg-[#03110f] text-[#a8f0dc] shadow-lg transition hover:bg-[#a8f0dc] hover:text-[#03110f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a8f0dc] sm:right-[-1.15rem] sm:size-12"
+              aria-label="Show a random selection of stickers"
+              title="Shuffle stickers"
+            >
+              <LuArrowRight aria-hidden className="size-5" />
+            </button>
+          </>
+        )}
+      </div>
     </section>
   );
 }
