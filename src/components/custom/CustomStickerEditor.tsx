@@ -4,6 +4,7 @@ import {
   LuTrash2, LuType, LuUndo2, LuUpload, LuX,
 } from 'react-icons/lu';
 import type { PickedImage } from '../../types/image';
+import { cropExportDimensions } from '../../utils/cropGeometry';
 
 const CANVAS_SIZE = 720;
 const EXPORT_SIZE = 1200;
@@ -507,9 +508,9 @@ export function CustomStickerEditor({
       drawComposition(fullContext, source, editorRef.current, null, scale);
 
       const output = document.createElement('canvas');
-      const ratio = selectedCrop.width / selectedCrop.height;
-      output.width = Math.max(1, Math.round(ratio >= 1 ? EXPORT_SIZE : EXPORT_SIZE * ratio));
-      output.height = Math.max(1, Math.round(ratio >= 1 ? EXPORT_SIZE / ratio : EXPORT_SIZE));
+      const dimensions = cropExportDimensions(selectedCrop, EXPORT_SIZE);
+      output.width = dimensions.width;
+      output.height = dimensions.height;
       const context = output.getContext('2d');
       if (!context) throw new Error('Canvas export is unavailable in this browser.');
       context.imageSmoothingEnabled = true;
