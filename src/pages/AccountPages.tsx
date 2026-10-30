@@ -43,7 +43,7 @@ export function AuthPage({mode}:{mode:Mode}){
 }
 function Guard({role,children}:{role:'ADMIN'|'CUSTOMER';children:(u:Account)=>ReactNode}){const {user,ready}=useAuth();if(!ready)return <Shell title="Loading account…"><p>Checking your session.</p></Shell>;if(!user)return <Shell title="Sign in required"><Link className="btn-accent" to={role==='ADMIN'?'/admin/login':'/login'}>Sign in</Link></Shell>;if(role==='ADMIN'&&user.role!=='ADMIN')return <Shell title="Access denied"><p>Administrator permissions are required.</p></Shell>;return <>{children(user)}</>;}
 export function CustomerDashboard(){
- usePageMeta('My account');const {request,logout}=useAuth(),navigate=useNavigate();
+ usePageMeta('My account');const {request}=useAuth();
  const [orders,setOrders]=useState<Array<{id:string;status:string;total:string;createdAt:string}>>([]),[addresses,setAddresses]=useState<Array<{id:string;line1:string;city:string;postalCode:string}>>([]),[error,setError]=useState('');
  const {user}=useAuth();
  useEffect(()=>{if(!user)return;void Promise.all([request<typeof orders>('/api/me/orders'),request<typeof addresses>('/api/me/addresses')]).then(([o,a])=>{setOrders(o);setAddresses(a);}).catch(e=>setError(String(e)));},[user?.id]);
