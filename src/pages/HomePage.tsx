@@ -166,6 +166,15 @@ function Collect() {
       Icon: LuStamp,
       accent: '#8FD3FF',
     },
+    {
+      to: '/product/mystery-pack',
+      eyebrow: 'SURPRISE INSIDE',
+      title: 'Mystery Shop',
+      description: 'Choose a series, get five themed stickers you know, plus one extra mystery pick.',
+      cta: 'SHOP MYSTERY PACK',
+      Icon: LuPackage,
+      accent: '#FFD447',
+    },
   ];
 
   return (
@@ -175,7 +184,7 @@ function Collect() {
         eyebrow="MORE TO EXPLORE"
         title="Little things worth discovering."
       />
-      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {features.map((feature) => (
           <li key={feature.to} className="min-w-0">
             <Link
