@@ -114,3 +114,14 @@ The tests use a temporary database and **must never run against a production dat
 | Login says backend missing | Set `VITE_API_URL` for the Vite build, or run local `http://localhost:5000` in development |
 
 **No release has been published by this guide.**
+
+## Compiled Node server (non-watch mode)
+
+After `npm install`, `npm run db:generate`, migrations, and environment setup in `backend/`:
+
+```bash
+npm run build
+npm start
+```
+
+This builds `backend/dist/index.js` using TypeScript and runs Node directly. `npm run dev` remains the recommended interactive local development command. Do not deploy to production before HTTPS, logging, database backups, credentials, and security reviews are in place.
