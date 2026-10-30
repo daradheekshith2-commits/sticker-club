@@ -144,56 +144,70 @@ function shuffleItems<T,>(items: T[]): T[] {
 
 function FeaturedRow({ category, eyebrow, title, linkLabel }: { category: Category; eyebrow: string; title: string; linkLabel: string }) {
   const candidates = sortProducts(
-    products.filter((p) => p.category === category && isPurchasable(p) && (category === 'stickers' || p.featured)),
+    products.filter((p) => p.category === category && isPurchasable(p)),
     'featured',
   );
   const initialItems = candidates.slice(0, 4);
   const [randomItems, setRandomItems] = useState<typeof initialItems | null>(null);
-  const items = category === 'stickers' ? randomItems ?? initialItems : initialItems;
+  const items = randomItems ?? initialItems;
+  const itemLabel = category === 'stickers' ? 'stickers' : 'posters';
 
-  const showRandomStickers = () => {
-    if (category !== 'stickers' || candidates.length <= 4) return;
+  const showRandomItems = () => {
+    if (candidates.length <= 4) return;
+
     const currentIds = new Set(items.map((product) => product.id));
     let nextItems = shuffleItems(candidates).slice(0, 4);
-    let attempts = 0;
-    while (nextItems.every((product) => currentIds.has(product.id)) && attempts < 8) {
-      nextItems = shuffleItems(candidates).slice(0, 4);
-      attempts += 1;
+
+    // Guarantee that a shuffle changes at least one card when alternatives exist.
+    if (nextItems.every((product) => currentIds.has(product.id))) {
+      const alternatives = candidates.filter((product) => !currentIds.has(product.id));
+      if (alternatives.length > 0) {
+        nextItems = [
+          ...shuffleItems(items).slice(0, 3),
+          alternatives[Math.floor(Math.random() * alternatives.length)],
+        ];
+        nextItems = shuffleItems(nextItems);
+      }
     }
+
     setRandomItems(nextItems);
   };
 
-  const action = category === 'stickers' ? (
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="inline-flex items-center gap-1.5 rounded-full border border-[#315e53] bg-[#071b18] p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
+  const action = (
+    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+      <div
+        className="inline-flex items-center gap-1 rounded-full border border-[#315e53] bg-[#071b18] p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.2)]"
+        aria-label={`Discover featured ${itemLabel}`}
+      >
         <span className="hidden px-2 text-[10px] font-extrabold tracking-[0.16em] text-[#a8f0dc] sm:inline">DISCOVER</span>
         <button
           type="button"
-          onClick={showRandomStickers}
-          className="grid size-10 place-items-center rounded-full border border-[#315e53] bg-[#0b2420] text-[#a8f0dc] transition duration-200 hover:border-[#a8f0dc] hover:bg-[#a8f0dc] hover:text-[#03110f] active:scale-95"
-          aria-label="Show another random selection of stickers"
-          title="Discover random stickers"
+          onClick={showRandomItems}
+          disabled={candidates.length <= 4}
+          className="grid size-10 place-items-center rounded-full border border-[#315e53] bg-[#0b2420] text-[#a8f0dc] transition duration-200 hover:border-[#a8f0dc] hover:bg-[#a8f0dc] hover:text-[#03110f] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label={`Show a random selection of ${itemLabel}`}
+          title={`Discover random ${itemLabel}`}
         >
           <LuArrowLeft aria-hidden className="size-[18px]" />
         </button>
         <button
           type="button"
-          onClick={showRandomStickers}
-          className="grid size-10 place-items-center rounded-full border border-[#d90a1f] bg-[#d90a1f] text-[#f4f0e8] shadow-[0_3px_12px_rgba(217,10,31,0.24)] transition duration-200 hover:border-[#a8f0dc] hover:bg-[#a8f0dc] hover:text-[#03110f] active:scale-95"
-          aria-label="Show another random selection of stickers"
-          title="Discover random stickers"
+          onClick={showRandomItems}
+          disabled={candidates.length <= 4}
+          className="grid size-10 place-items-center rounded-full border border-[#d90a1f] bg-[#d90a1f] text-[#f4f0e8] shadow-[0_3px_12px_rgba(217,10,31,0.24)] transition duration-200 hover:border-[#a8f0dc] hover:bg-[#a8f0dc] hover:text-[#03110f] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label={`Show another random selection of ${itemLabel}`}
+          title={`Discover more ${itemLabel}`}
         >
           <LuArrowRight aria-hidden className="size-[18px]" />
         </button>
       </div>
-      <Link to={shopUrl({ category })} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-[#5d9d8f] px-5 py-3 text-sm font-bold text-[#a8f0dc] transition hover:border-[#a8f0dc] hover:bg-[#a8f0dc] hover:text-[#03110f]">
+      <Link
+        to={shopUrl({ category })}
+        className="inline-flex min-h-12 items-center gap-2 rounded-full border border-[#5d9d8f] px-5 py-3 text-sm font-bold text-[#a8f0dc] transition hover:border-[#a8f0dc] hover:bg-[#a8f0dc] hover:text-[#03110f]"
+      >
         {linkLabel} <LuArrowRight aria-hidden />
       </Link>
     </div>
-  ) : (
-    <Link to={shopUrl({ category })} className="btn-ghost">
-      {linkLabel} <LuArrowRight aria-hidden />
-    </Link>
   );
 
   return (
