@@ -89,12 +89,12 @@ function CategoryDoors() {
         <path d="M3 29c12-20 24-24 34-16S54 30 76 4M8 36c14-15 26-19 39-10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
 
-      <ul className="relative mx-auto grid max-w-[1180px] grid-cols-1 gap-4 px-4 sm:px-6 md:grid-cols-3 md:gap-5">
+      <ul className="relative mx-auto grid max-w-[1024px] grid-cols-1 gap-5 px-4 sm:px-7 md:grid-cols-3 md:gap-5">
         {cards.map((card) => (
           <li key={card.id} className="min-w-0">
             <Link
               to={card.to}
-              className="on-light group relative flex min-h-[260px] aspect-[1.14/1] flex-col overflow-hidden rounded-[12px] border border-[#101815]/90 p-3.5 shadow-[0_9px_18px_rgba(0,0,0,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_15px_28px_rgba(0,0,0,0.28)] sm:p-4"
+              className="on-light group relative flex min-h-[255px] aspect-[1.14/1] flex-col overflow-hidden rounded-[12px] border border-[#101815]/90 p-3.5 shadow-[0_9px_18px_rgba(0,0,0,0.22)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_15px_28px_rgba(0,0,0,0.28)] sm:p-4"
               style={{ backgroundColor: card.color }}
             >
               <div className="flex items-center justify-between gap-3">
@@ -104,9 +104,11 @@ function CategoryDoors() {
                 </span>
               </div>
 
-              <div className="relative mx-auto my-1 flex min-h-0 w-full max-w-[250px] flex-1 items-center justify-center">
+              <div className="relative mx-auto my-1 flex min-h-0 w-full max-w-[260px] flex-1 items-center justify-center">
                 {card.id === 'stickers' && (
-                  <div className="relative h-[120px] w-full max-w-[230px]">
+                  <div className="relative h-[145px] w-full max-w-[260px]">
+                    <span aria-hidden className="pointer-events-none absolute left-[4%] top-[30%] z-[4] rotate-[-16deg] rounded-[7px] border-[3px] border-white bg-[#ffb83f] px-2 py-1 text-[10px] font-black leading-none text-[#111] shadow-[0_5px_3px_#0003]">YOU'RE<br/>A STAR ★</span>
+                    <span aria-hidden className="pointer-events-none absolute bottom-[2%] right-[11%] z-[5] rotate-[-9deg] rounded-lg border-[3px] border-white bg-[#191919] px-2 py-1 text-center text-[11px] font-black leading-[0.98] text-white shadow-[0_5px_3px_#0003]">oh shit.<br/>here we<br/>go again</span>
                     {stickerDesigns.slice(0, 4).map((design, index) => (
                       <div key={design.name} className="absolute drop-shadow-[0_5px_5px_rgba(0,0,0,0.18)] transition-transform duration-200 group-hover:scale-105" style={stickerPositions[index]}>
                         <StickerSvg design={design} className="h-auto w-full" />
@@ -119,9 +121,10 @@ function CategoryDoors() {
                 )}
 
                 {card.id === 'posters' && (
-                  <div className="relative h-[128px] w-full max-w-[245px]">
+                  <div className="relative h-[148px] w-full max-w-[255px]">
+                    <span aria-hidden className="absolute -top-1 left-1/2 z-[5] rotate-[6deg] border border-[#191919] bg-[#f8d96c] px-2 text-[12px] font-black text-[#191919] shadow-sm">WALL ART</span>
                     {posterDesigns.map((poster, index) => (
-                      <div key={poster.title + index} className="absolute top-0 h-[122px] w-[28%] overflow-hidden rounded-[2px] border-[3px] border-[#F8F6EE] bg-white shadow-[0_6px_8px_rgba(0,0,0,0.25)] transition-transform duration-200 group-hover:-translate-y-1" style={posterPositions[index]}>
+                      <div key={poster.title + index} className="absolute top-0 h-[142px] w-[28%] overflow-hidden rounded-[2px] border-[3px] border-[#F8F6EE] bg-white shadow-[0_6px_8px_rgba(0,0,0,0.25)] transition-transform duration-200 group-hover:-translate-y-1" style={posterPositions[index]}>
                         <PosterSvg poster={poster} className="h-full w-full" />
                       </div>
                     ))}
@@ -132,8 +135,8 @@ function CategoryDoors() {
                 )}
 
                 {card.id === 'shop-your-own' && (
-                  <div className="relative flex h-[128px] w-full max-w-[240px] items-center justify-center">
-                    <div className="relative grid h-[100px] w-[178px] rotate-[-5deg] place-items-center rounded-[13px] border-2 border-dashed border-[#141414] bg-[#F8F7F0] shadow-[0_7px_12px_rgba(0,0,0,0.16)] transition-transform duration-200 group-hover:rotate-[-2deg]">
+                  <div className="relative flex h-[148px] w-full max-w-[260px] items-center justify-center">
+                    <div className="relative grid h-[115px] w-[190px] rotate-[-5deg] place-items-center rounded-[13px] border-2 border-dashed border-[#141414] bg-[#F8F7F0] shadow-[0_7px_12px_rgba(0,0,0,0.16)] transition-transform duration-200 group-hover:rotate-[-2deg]">
                       <div className="grid size-[66px] place-items-center rounded-md bg-[#D7D8D5] text-[#121212]">
                         <LuImagePlus aria-hidden className="size-12" strokeWidth={1.8} />
                       </div>
@@ -160,9 +163,9 @@ function CategoryDoors() {
                     {orderable(card.category).length} designs · from {formatPrice(lowestPrice(card.category))}
                   </p>
                 )}
-                <h2 className="mt-0.5 font-display text-[21px] leading-none font-extrabold tracking-tight text-[#121212] sm:text-[22px]">{card.title}</h2>
-                <p className="mt-1.5 min-h-[2.2rem] text-[11px] leading-[1.45] text-[#121212]/85 sm:text-xs">{card.pitch}</p>
-                <span className="mt-2 inline-flex min-h-8 items-center gap-2 rounded-full bg-[#101312] px-4 py-2 text-[9px] font-extrabold tracking-[0.06em] text-[#F4F0E8] transition-colors group-hover:bg-[#263b35] sm:text-[10px]">
+                <h2 className="mt-0.5 font-display text-[23px] leading-none font-extrabold tracking-tight text-[#121212] sm:text-[22px]">{card.title}</h2>
+                <p className="mt-1 min-h-[2.2rem] text-[11px] leading-[1.45] text-[#121212]/85 sm:text-xs">{card.pitch}</p>
+                <span className="mt-1.5 inline-flex min-h-8 items-center gap-2 rounded-full bg-[#101312] px-4 py-2 text-[9px] font-extrabold tracking-[0.06em] text-[#F4F0E8] transition-colors group-hover:bg-[#263b35] sm:text-[10px]">
                   {card.cta} <LuArrowRight aria-hidden className="size-3.5" />
                 </span>
               </div>
