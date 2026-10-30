@@ -220,6 +220,7 @@ app.patch('/api/admin/orders/:id',requireAuth,admin,wrap(async(req,res)=>{
 }));
 app.use((err:unknown,_req:Request,res:Response,_next:NextFunction)=>{
  if(err instanceof z.ZodError){res.status(400).json({error:'Invalid input',issues:err.issues});return;}
- console.error(err);res.status(500).json({error:'Server error'});
+ const status=typeof err==='object'&&err!==null&&'status' in err&&typeof (err as {status?:unknown}).status==='number'?(err as {status:number}).status:500;
+ if(status>=500)console.error(err);res.status(status).json({error:status>=500?'Server error':err instanceof Error?err.message:'Request failed'});
 });
 app.listen(config.PORT,()=>console.log('Sticker Club local API on port',config.PORT));
