@@ -169,6 +169,16 @@ app.delete('/api/cart',requireAuth,wrap(async(req,res)=>{
  if(cart)await db.cartItem.deleteMany({where:{cartId:cart.id}});
  res.json({ok:true});
 }));
+// Preview-only catalogue variants must not be charged at the base product price.
+// A real order can contain only products whose storefront price is unambiguous.
+app.get('/api/checkout/availability',requireAuth,wrap(async(req,res)=>{
+ const cart=await getCart(req.session!.id);
+ res.json({items:cart.items.map(item=>({
+  id:item.id,productId:item.productId,quantity:item.quantity,
+  name:item.product.name,price:item.product.price.toString(),
+  active:item.product.active,available:item.product.inventory?.quantity??null
+ }))});
+}));
 app.post('/api/orders',requireAuth,wrap(async(req,res)=>{
  const {addressId}=z.object({addressId:z.string().min(1)}).parse(req.body);
  const userId=req.session!.id;
