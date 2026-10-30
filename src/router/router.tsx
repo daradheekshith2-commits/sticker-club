@@ -38,11 +38,23 @@ interface RouterContextValue {
   navigate: (to: string, options?: NavigateOptions) => void;
 }
 
+// GitHub Pages project sites live below /sticker-club/; Vercel remains at /.
+const hostingBase = import.meta.env.BASE_URL.replace(/\/$/, '');
+const hostedPath = (to: string) => {
+  if (!hostingBase || !to.startsWith('/') || to.startsWith('//') || to === hostingBase || to.startsWith(hostingBase + '/')) return to;
+  return hostingBase + to;
+};
+const localPath = (pathname: string) => {
+  if (!hostingBase) return pathname;
+  if (pathname === hostingBase) return '/';
+  return pathname.startsWith(hostingBase + '/') ? pathname.slice(hostingBase.length) : pathname;
+};
+
 const RouterContext = createContext<RouterContextValue | null>(null);
 const ParamsContext = createContext<Record<string, string>>({});
 
 function readLocation(): Location {
-  return { pathname: window.location.pathname, search: window.location.search };
+  return { pathname: localPath(window.location.pathname), search: window.location.search };
 }
 
 export function RouterProvider({ children }: { children: ReactNode }) {
@@ -56,8 +68,8 @@ export function RouterProvider({ children }: { children: ReactNode }) {
 
   const navigate = useCallback((to: string, options: NavigateOptions = {}) => {
     const { replace = false, scroll = true } = options;
-    if (replace) window.history.replaceState(null, '', to);
-    else window.history.pushState(null, '', to);
+    if (replace) window.history.replaceState(null, '', hostedPath(to));
+    else window.history.pushState(null, '', hostedPath(to));
     setLocation(readLocation());
     if (scroll) window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
@@ -139,7 +151,7 @@ export function Link({ to, onClick, target, ...rest }: LinkProps) {
     e.preventDefault();
     navigate(to);
   };
-  return <a href={to} target={target} onClick={handleClick} {...rest} />;
+  return <a href={hostedPath(to)} target={target} onClick={handleClick} {...rest} />;
 }
 
 /** A Link that knows whether it points at the current page. */

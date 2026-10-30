@@ -157,7 +157,7 @@ for (const file of files) {
   if (size > LARGE_FILE_BYTES) large.push(`${file} (${(size / 1024 / 1024).toFixed(1)} MB)`);
   entries.push({
     key: keyFor(file, usedKeys),
-    src: `/hero-stickers/${encodeURIComponent(file)}`,
+    src: `${process.env.GITHUB_PAGES === 'true' ? '/sticker-club/' : '/'}hero-stickers/${encodeURIComponent(file)}`,
     alt: labelFor(file),
     width: info.width,
     height: info.height,

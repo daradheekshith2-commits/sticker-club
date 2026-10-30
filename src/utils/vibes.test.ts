@@ -24,7 +24,7 @@ test('the four renamed collections and their order on the homepage', () => {
   assert.deepEqual(featured, [
     ['anime', 'Anime', '#FFD447'],
     ['movies', 'Movies', '#8FD3FF'],
-    ['quotes', 'Life Quotes', '#FF5B2E'],
+    ['quotes', 'Cars & Bikes', '#FF5B2E'],
     ['marvel', 'Marvel', '#D4FF3A'],
     ['cute', 'Cute & Aesthetic', '#FFB3D1'],
   ]);
@@ -51,7 +51,7 @@ test('old collection links keep working through aliases', () => {
   assert.equal(resolveCollectionId('cute'), 'cute');
   assert.equal(resolveCollectionId('nope'), undefined);
   assert.deepEqual(filtersFromParams(new URLSearchParams('vibe=campus,anime,auto')).collections, ['anime', 'marvel']);
-  assert.equal(getCollection('desi')?.name, 'Life Quotes');
+  assert.equal(getCollection('desi')?.name, 'Cars & Bikes');
 });
 
 test('renamed collections hold only on-theme products', () => {
@@ -59,6 +59,7 @@ test('renamed collections hold only on-theme products', () => {
   for (const id of ['anime', 'movies', 'quotes', 'marvel']) assert.ok(tagged(id).length >= 3, `${id} needs designs`);
   assert.ok(tagged('anime').every((p) => p.tags.includes('anime')));
   assert.ok(tagged('movies').every((p) => p.tags.includes('movies')));
+  assert.ok(tagged('quotes').every((p) => /car|bike|auto|motor|racing|helmet|flag/i.test(p.tags.join(' ') + ' ' + p.description)), 'Cars & Bikes contains unrelated products');
   // No licence exists: everything under Marvel is an original design, marked unofficial.
   for (const p of tagged('marvel')) {
     assert.ok(p.tags.includes('unofficial') && p.tags.includes('original'), p.id);

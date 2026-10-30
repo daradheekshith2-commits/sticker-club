@@ -93,13 +93,25 @@ export function CreateStickersPage() {
 
   // This page holds one reference to an uploaded photo; release it when it's replaced, removed or the page closes.
   const held = useRef<PickedImage | null>(null);
+  // Keep a separate retained reference to the untouched upload so recropping
+  // always starts from original pixels instead of degrading an exported PNG.
+  const originalHeld = useRef<PickedImage | null>(null);
   const release = (img: PickedImage | null) => {
     if (img?.source === 'upload') objectUrls.release(img.objectUrl);
   };
-  useEffect(() => () => release(held.current), []);
+  useEffect(() => () => {
+    release(held.current);
+    release(originalHeld.current);
+  }, []);
 
   const chooseImage = (img: PickedImage) => {
     release(held.current);
+    release(originalHeld.current);
+    originalHeld.current = null;
+    if (img.source === 'upload') {
+      objectUrls.retain(img.objectUrl);
+      originalHeld.current = img;
+    }
     held.current = img;
     setImage(img);
     setReplacing(false);
@@ -109,6 +121,8 @@ export function CreateStickersPage() {
   };
   const removeImage = () => {
     release(held.current);
+    release(originalHeld.current);
+    originalHeld.current = null;
     held.current = null;
     setImage(null);
     setEditing(false);
@@ -128,6 +142,8 @@ export function CreateStickersPage() {
     addCustomSticker(config, quantity);
     // The cart now holds its own reference to the photo; this page lets go and starts fresh.
     release(held.current);
+    release(originalHeld.current);
+    originalHeld.current = null;
     held.current = null;
     setImage(null);
     setRights(false);
@@ -204,18 +220,23 @@ export function CreateStickersPage() {
                 </div>
                 {editing && image.source === 'upload' && (
                   <CustomStickerEditor
-                    image={image}
+                    image={originalHeld.current?.source === 'upload' ? originalHeld.current : image}
                     onClose={() => setEditing(false)}
-                    onApply={(blob) => {
+                    onApply={(blob, width, height) => {
                       const editedUrl = objectUrls.create(blob);
                       const baseName = image.fileName.replace(/\.[^.]+$/, '');
-                      chooseImage({
+                      const editedImage: PickedImage = {
                         source: 'upload',
                         objectUrl: editedUrl,
                         fileName: 'edited-' + baseName + '.png',
-                        width: 1200,
-                        height: 1200,
-                      });
+                        width,
+                        height,
+                      };
+                      release(held.current);
+                      held.current = editedImage;
+                      setImage(editedImage);
+                      setEditing(false);
+                      setAdded(null);
                     }}
                   />
                 )}

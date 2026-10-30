@@ -1,3 +1,5 @@
+import { AuthProvider } from './context/AuthContext';
+import { AuthPage, CustomerDashboard, AdminDashboard } from './pages/AccountPages';
 import { CartProvider } from './context/CartContext';
 import { Layout } from './components/layout/Layout';
 import { RouterProvider, Routes, type RouteDef } from './router/router';
@@ -32,6 +34,13 @@ const routes: RouteDef[] = [
   { path: '/collector-passport', element: <PassportPage /> },
   { path: '/vote-next-drop', element: <VotePage /> },
   { path: '/checkout', element: <CheckoutPage /> },
+  { path: '/login', element: <AuthPage mode="login" /> },
+  { path: '/register', element: <AuthPage mode="register" /> },
+  { path: '/forgot-password', element: <AuthPage mode="forgot" /> },
+  { path: '/reset-password', element: <AuthPage mode="reset" /> },
+  { path: '/account', element: <CustomerDashboard /> },
+  { path: '/admin/login', element: <AuthPage mode="admin" /> },
+  { path: '/admin', element: <AdminDashboard /> },
   { path: '/about', element: <AboutPage /> },
   { path: '/faq', element: <FaqPage /> },
   { path: '/contact', element: <ContactPage /> },
@@ -42,11 +51,13 @@ const routes: RouteDef[] = [
 export default function App() {
   return (
     <RouterProvider>
+      <AuthProvider>
       <CartProvider>
         <Layout>
           <Routes routes={routes} />
         </Layout>
       </CartProvider>
+      </AuthProvider>
     </RouterProvider>
   );
 }
