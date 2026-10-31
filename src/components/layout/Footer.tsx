@@ -94,7 +94,7 @@ export function Footer() {
         <Column title="Vibes" links={vibeLinks} />
         <Column title="Help" links={helpLinks} />
       </div>
-      <div className="border-t border-paper/15">
+      <div className="border-t border-mint/15">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-ink/60 sm:flex-row sm:justify-between sm:px-6">
           <p>
             © {year} {brand.displayName}. All designs original. Made in {brand.city}.

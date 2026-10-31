@@ -8,7 +8,7 @@
  *
  * When a product has real `images`, <ProductImage> shows those instead.
  */
-import { createContext, useContext, useId, type ReactNode } from 'react';
+import { createContext, useContext, useId, useState, type ReactNode } from 'react';
 import type { PosterDesign, Product, ProductArt as Art, StickerDesign } from '../../types/product';
 import { brand } from '../../config/brand';
 import { motifs } from './motifs';
@@ -507,8 +507,9 @@ export function viewsFor(product: Product): ArtView[] {
 export function ProductImage({ product, view = 'main', index = 0, className }: {
   product: Product; view?: ArtView; index?: number; className?: string;
 }) {
+  const [loadError, setLoadError] = useState(false);
   const photo = product.images?.[index];
-  if (photo) {
+  if (photo && !loadError) {
     const src = photo.src.startsWith('http') || photo.src.startsWith(import.meta.env.BASE_URL)
       ? photo.src
       : `${import.meta.env.BASE_URL}${photo.src.replace(/^\//, '')}`;
@@ -517,6 +518,7 @@ export function ProductImage({ product, view = 'main', index = 0, className }: {
       <img
         src={src}
         alt={photo.alt}
+        onError={() => setLoadError(true)}
         className={`${className ?? ''} ${isSticker ? 'object-contain p-3 drop-shadow-[0_6px_14px_rgba(0,0,0,0.28)]' : 'object-cover'}`}
         loading="lazy"
         decoding="async"
