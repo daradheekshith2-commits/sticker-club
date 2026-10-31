@@ -1,6 +1,7 @@
 import type { PosterDesign, Product, StickerDesign, Variant } from '../types/product';
 import type { RarityId } from '../types/collectible';
 import { series } from './rarity';
+import { realStickerProducts, realPosterProducts } from './realProducts';
 
 /**
  * DEMO CATALOGUE — stickers and posters
@@ -651,4 +652,7 @@ export const products: Product[] = [
     tags: ['personalised', 'photo', 'gift'], featured: false, isNew: false, displayOrder: 130, status: 'coming-soon',
     art: { kind: 'collage', backdrop: '#D3F6E6' },
   },
+
+  ...realStickerProducts,
+  ...realPosterProducts,
 ];

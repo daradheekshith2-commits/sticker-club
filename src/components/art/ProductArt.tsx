@@ -509,7 +509,19 @@ export function ProductImage({ product, view = 'main', index = 0, className }: {
 }) {
   const photo = product.images?.[index];
   if (photo) {
-    return <img src={photo.src} alt={photo.alt} className={`${className ?? ''} object-cover`} loading="lazy" />;
+    const src = photo.src.startsWith('http') || photo.src.startsWith(import.meta.env.BASE_URL)
+      ? photo.src
+      : `${import.meta.env.BASE_URL}${photo.src.replace(/^\//, '')}`;
+    const isSticker = product.category === 'stickers';
+    return (
+      <img
+        src={src}
+        alt={photo.alt}
+        className={`${className ?? ''} ${isSticker ? 'object-contain p-3 drop-shadow-[0_6px_14px_rgba(0,0,0,0.28)]' : 'object-cover'}`}
+        loading="lazy"
+        decoding="async"
+      />
+    );
   }
   return <ProductArtSvg product={product} view={view} className={className} />;
 }

@@ -458,6 +458,12 @@ export function ShopPage() {
   const results = useMemo(() => filterAndSort(filters), [filters]);
   const [query, setQuery] = useState(filters.query);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const PAGE_SIZE = 36;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [filters]);
   const title = titleFor(filters);
   const isStickerShop = filters.category === 'stickers';
   // The big intro only shows on the sticker landing view; once a format or vibe is chosen, a compact title takes over.
@@ -621,7 +627,23 @@ export function ShopPage() {
 
         <section aria-label="Products">
           {results.length ? (
-            <ProductGrid products={results} headingLevel="h2" layout="beside-filters" />
+            <>
+              <ProductGrid products={results.slice(0, visibleCount)} headingLevel="h2" layout="beside-filters" />
+              {visibleCount < results.length && (
+                <div className="mt-12 flex flex-col items-center justify-center gap-3">
+                  <p className="text-sm font-medium text-ink-soft">
+                    Showing {Math.min(visibleCount, results.length)} of {results.length} designs
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                    className="btn-primary px-8 py-3.5 text-sm font-bold shadow-md hover:shadow-lg transition-all"
+                  >
+                    Load more designs ({results.length - visibleCount} remaining)
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <EmptyState
               title="Nothing matches that (yet)."

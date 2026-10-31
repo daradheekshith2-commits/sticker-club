@@ -65,13 +65,16 @@ function TileView({ tile, index, eager, onFail }: { tile: Tile; index: number; e
   const { file } = tile;
   // Cutouts sit on a coloured backing with breathing room; opaque images fill a dark tile at their own shape.
   const aspect = file.transparent ? tileAspect(file.width, file.height) : tileAspect(file.width, file.height, 0.6, 1.8);
+  const src = file.src.startsWith('http') || file.src.startsWith(import.meta.env.BASE_URL)
+    ? file.src
+    : `${import.meta.env.BASE_URL}${file.src.replace(/^\//, '')}`;
   return (
     <div
       className={`mosaic-tile relative mb-4 overflow-hidden rounded-[22px] ${file.transparent ? 'p-[9%]' : 'border border-[#A8F0DC]/20'}`}
       style={{ aspectRatio: String(aspect), backgroundColor: file.transparent ? backing : '#071B18' }}
     >
       <img
-        src={file.src}
+        src={src}
         alt=""
         width={file.width}
         height={file.height}
